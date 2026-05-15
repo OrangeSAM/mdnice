@@ -1,26 +1,26 @@
 <template>
   <div>
     <div
-      class="file-item"
-      :class="{ 'is-dir': item.is_dir, 'is-active': isActive }"
-      :style="{ paddingLeft: `${12 + depth * 16}px` }"
+      class="tree-item"
+      :class="{ 'is-dir': item.is_dir, 'is-active': isCurrentFile }"
+      :style="{ paddingLeft: `${10 + depth * 14}px` }"
       @click="handleClick"
     >
-      <span class="file-icon" v-if="item.is_dir">
-        <svg v-if="isOpen" width="12" height="12" viewBox="0 0 16 16" fill="none">
+      <span class="tree-icon" v-if="item.is_dir">
+        <svg v-if="isOpen" width="10" height="10" viewBox="0 0 16 16" fill="none">
           <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        <svg v-else width="12" height="12" viewBox="0 0 16 16" fill="none">
+        <svg v-else width="10" height="10" viewBox="0 0 16 16" fill="none">
           <path d="M6 4L10 8L6 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </span>
-      <span class="file-icon file-icon--file" v-else>
-        <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+      <span class="tree-icon tree-icon--file" v-else>
+        <svg width="10" height="10" viewBox="0 0 16 16" fill="none">
           <path d="M4 2H10L12 4V14H4V2Z" stroke="currentColor" stroke-width="1.2"/>
           <path d="M10 2V4H12" stroke="currentColor" stroke-width="1.2"/>
         </svg>
       </span>
-      <span class="file-name">{{ item.name }}</span>
+      <span class="tree-name">{{ item.name }}</span>
     </div>
     <div v-if="item.is_dir && isOpen && item.children">
       <FileTreeItem
@@ -34,7 +34,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useAppStore } from '../stores/app'
 import { readTextFile } from '@tauri-apps/plugin-fs'
 
@@ -53,7 +53,7 @@ const props = defineProps<{
 const store = useAppStore()
 const isOpen = ref(false)
 
-const isActive = ref(false)
+const isCurrentFile = computed(() => store.currentFilePath === props.item.path)
 
 async function handleClick() {
   if (props.item.is_dir) {
@@ -61,7 +61,6 @@ async function handleClick() {
     return
   }
 
-  // Only open markdown files
   if (!props.item.name.match(/\.(md|markdown|mdown|mkd)$/i)) return
 
   try {
@@ -74,47 +73,55 @@ async function handleClick() {
 </script>
 
 <style scoped>
-.file-item {
+.tree-item {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 12px;
+  gap: 5px;
+  padding: 3px 10px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 12px;
   color: var(--text-secondary);
-  transition: all 0.1s ease;
+  transition: all 0.08s ease;
   white-space: nowrap;
   overflow: hidden;
+  border-radius: var(--radius-sm);
+  margin: 0 4px;
 }
 
-.file-item:hover {
+.tree-item:hover {
   background: var(--bg-tertiary);
 }
 
-.file-item.is-active {
+.tree-item.is-active {
   background: var(--accent-light);
   color: var(--accent);
-}
-
-.file-item.is-dir {
   font-weight: 500;
 }
 
-.file-icon {
+.tree-item.is-dir {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.tree-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 14px;
-  height: 14px;
+  width: 12px;
+  height: 12px;
   flex-shrink: 0;
   color: var(--text-muted);
 }
 
-.file-icon--file {
+.tree-item.is-dir .tree-icon {
+  color: var(--text-secondary);
+}
+
+.tree-icon--file {
   color: var(--text-muted);
 }
 
-.file-name {
+.tree-name {
   overflow: hidden;
   text-overflow: ellipsis;
 }

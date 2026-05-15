@@ -1,47 +1,91 @@
 <template>
   <div class="app" :data-theme="currentTheme">
-    <TitleBar />
     <div class="app-body">
-      <Sidebar />
-      <div class="main-content" v-if="store.hasFile">
-        <div class="split-pane">
-          <div class="editor-section" :style="{ width: `${store.settings.editor_width}%` }">
-            <div class="panel-header">
-              <span class="panel-label">Editor</span>
-            </div>
-            <EditorPanel @update="handleContentUpdate" />
+      <Sidebar v-if="store.showSidebar" />
+      <div class="main-area">
+        <div class="app-topbar" v-if="store.hasFile">
+          <div class="topbar-left" data-tauri-drag-region>
+            <span class="file-indicator" v-if="store.isModified"></span>
+            <span class="file-name">{{ store.currentFileName }}</span>
           </div>
-          <div class="resize-handle" @mousedown="startResize">
-            <div class="resize-line"></div>
-          </div>
-          <div class="preview-section" :style="{ width: `${100 - store.settings.editor_width}%` }">
-            <PreviewPanel />
-          </div>
-        </div>
-      </div>
-      <div class="welcome" v-else>
-        <div class="welcome-content">
-          <div class="welcome-icon">M</div>
-          <h1>Markdown Nice</h1>
-          <p>A beautiful Markdown reader for macOS</p>
-          <div class="welcome-actions">
-            <button class="welcome-btn" @click="handleOpenFile">
-              <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
+          <div class="topbar-actions">
+            <button class="topbar-btn" @click="handleOpen" title="Open File">
+              <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
                 <path d="M2 4C2 3.44772 2.44772 3 3 3H6L7.5 5H13C13.5523 5 14 5.44772 14 6V12C14 12.5523 13.5523 13 13 13H3C2.44772 13 2 12.5523 2 12V4Z" stroke="currentColor" stroke-width="1.2"/>
               </svg>
-              Open File
             </button>
-            <button class="welcome-btn secondary" @click="handleOpenFolder">
-              <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
+            <button class="topbar-btn" @click="handleOpenFolder" title="Open Folder">
+              <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
                 <path d="M2 4C2 3.44772 2.44772 3 3 3H6L7.5 5H13C13.5523 5 14 5.44772 14 6V12C14 12.5523 13.5523 13 13 13H3C2.44772 13 2 12.5523 2 12V4Z" stroke="currentColor" stroke-width="1.2"/>
                 <path d="M2 7H14" stroke="currentColor" stroke-width="1.2"/>
               </svg>
-              Open Folder
+            </button>
+            <button class="topbar-btn" @click="handleSave" title="Save" :disabled="!store.isModified">
+              <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+                <path d="M3 2H10L13 5V13C13 13.5523 12.5523 14 12 14H3C2.44772 14 2 13.5523 2 13V3C2 2.44772 2.44772 2 3 2Z" stroke="currentColor" stroke-width="1.2"/>
+                <path d="M5 2V6H9V2" stroke="currentColor" stroke-width="1.2"/>
+                <path d="M5 9H10" stroke="currentColor" stroke-width="1.2"/>
+                <path d="M5 11H8" stroke="currentColor" stroke-width="1.2"/>
+              </svg>
+            </button>
+            <div class="topbar-divider"></div>
+            <button class="topbar-btn" @click="store.showSettings = !store.showSettings" title="Settings">
+              <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+                <path d="M8 10C9.10457 10 10 9.10457 10 8C10 6.89543 9.10457 6 8 6C6.89543 6 6 6.89543 6 8C6 9.10457 6.89543 10 8 10Z" stroke="currentColor" stroke-width="1.2"/>
+                <path d="M13.5 8C13.5 7.6 13.3 7.2 13 6.9L13.6 5.4L12.1 4.5L10.8 5.5C10.5 5.3 10.1 5.2 9.7 5.1L9.4 3.7H7.4L7.1 5.1C6.7 5.2 6.3 5.3 6 5.5L4.7 4.5L3.2 5.4L3.8 6.9C3.6 7.2 3.5 7.6 3.5 8C3.5 8.4 3.6 8.8 3.8 9.1L3.2 10.6L4.7 11.5L6 10.5C6.3 10.7 6.7 10.8 7.1 10.9L7.4 12.3H9.4L9.7 10.9C10.1 10.8 10.5 10.7 10.8 10.5L12.1 11.5L13.6 10.6L13 9.1C13.3 8.8 13.5 8.4 13.5 8Z" stroke="currentColor" stroke-width="1.2"/>
+              </svg>
             </button>
           </div>
-          <div class="welcome-shortcuts">
-            <span><kbd>⌘</kbd> + <kbd>O</kbd> Open File</span>
-            <span><kbd>⌘</kbd> + <kbd>S</kbd> Save</span>
+        </div>
+
+        <div class="split-pane" v-if="store.hasFile">
+          <div class="editor-section" :style="{ width: `${store.settings.editor_width}%` }">
+            <div class="panel-header">
+              <span class="panel-label">Markdown</span>
+            </div>
+            <EditorPanel @update="handleContentUpdate" />
+          </div>
+          <div class="resize-handle" @mousedown="startResize"></div>
+          <div class="preview-section" :style="{ width: `${100 - store.settings.editor_width}%` }">
+            <div class="panel-header">
+              <span class="panel-label">Preview</span>
+            </div>
+            <PreviewPanel />
+          </div>
+        </div>
+
+        <div class="welcome" v-else>
+          <div class="welcome-content">
+            <div class="welcome-logo">
+              <span>M</span>
+            </div>
+            <h1>Markdown Nice</h1>
+            <p class="welcome-subtitle">A quiet place to read and write Markdown.</p>
+            <div class="welcome-actions">
+              <button class="btn-primary" @click="handleOpenFile">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M2 4C2 3.44772 2.44772 3 3 3H6L7.5 5H13C13.5523 5 14 5.44772 14 6V12C14 12.5523 13.5523 13 13 13H3C2.44772 13 2 12.5523 2 12V4Z" stroke="currentColor" stroke-width="1.2"/>
+                </svg>
+                Open File
+              </button>
+              <button class="btn-ghost" @click="handleOpenFolder">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M2 4C2 3.44772 2.44772 3 3 3H6L7.5 5H13C13.5523 5 14 5.44772 14 6V12C14 12.5523 13.5523 13 13 13H3C2.44772 13 2 12.5523 2 12V4Z" stroke="currentColor" stroke-width="1.2"/>
+                  <path d="M2 7H14" stroke="currentColor" stroke-width="1.2"/>
+                </svg>
+                Open Folder
+              </button>
+            </div>
+            <div class="welcome-hints">
+              <div class="hint-item">
+                <kbd>⌘</kbd><kbd>O</kbd>
+                <span>Open</span>
+              </div>
+              <div class="hint-item">
+                <kbd>⌘</kbd><kbd>S</kbd>
+                <span>Save</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -55,7 +99,6 @@ import { ref, onMounted, computed } from 'vue'
 import { useAppStore } from './stores/app'
 import { useTheme } from './composables/useTheme'
 import { useSettings } from './composables/useSettings'
-import TitleBar from './components/TitleBar.vue'
 import Sidebar from './components/Sidebar.vue'
 import EditorPanel from './components/EditorPanel.vue'
 import PreviewPanel from './components/PreviewPanel.vue'
@@ -101,16 +144,30 @@ async function handleOpenFile() {
 
 async function handleOpenFolder() {
   try {
-    const selected = await open({
-      directory: true,
-      multiple: false,
-    })
+    const selected = await open({ directory: true, multiple: false })
     if (selected) {
       const entries = await invoke<any[]>('read_folder', { path: selected as string })
       store.fileTree = entries
     }
   } catch (e) {
     console.error('Open folder failed:', e)
+  }
+}
+
+async function handleOpen() {
+  await handleOpenFile()
+}
+
+async function handleSave() {
+  if (!store.currentFilePath || !store.isModified) return
+  try {
+    await invoke('write_file', {
+      path: store.currentFilePath,
+      content: store.fileContent,
+    })
+    store.isModified = false
+  } catch (e) {
+    console.error('Save failed:', e)
   }
 }
 
@@ -135,7 +192,6 @@ function startResize(e: MouseEvent) {
   document.addEventListener('mouseup', onMouseUp)
 }
 
-// Keyboard shortcuts
 onMounted(async () => {
   await loadSettings()
 
@@ -146,14 +202,7 @@ onMounted(async () => {
     }
     if ((e.metaKey || e.ctrlKey) && e.key === 's') {
       e.preventDefault()
-      if (store.currentFilePath && store.isModified) {
-        invoke('write_file', {
-          path: store.currentFilePath,
-          content: store.fileContent,
-        }).then(() => {
-          store.isModified = false
-        })
-      }
+      handleSave()
     }
   })
 })
@@ -174,16 +223,98 @@ onMounted(async () => {
   overflow: hidden;
 }
 
-.main-content {
+.main-area {
   flex: 1;
   display: flex;
+  flex-direction: column;
   overflow: hidden;
 }
 
+/* Top bar */
+.app-topbar {
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-secondary);
+  flex-shrink: 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.file-indicator {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+
+.file-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+}
+
+.topbar-btn {
+  width: 28px;
+  height: 26px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.12s ease;
+}
+
+.topbar-btn:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.topbar-btn:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
+.topbar-btn:disabled:hover {
+  background: transparent;
+  color: var(--text-muted);
+}
+
+.topbar-divider {
+  width: 1px;
+  height: 14px;
+  background: var(--border);
+  margin: 0 4px;
+}
+
+/* Split pane */
 .split-pane {
   display: flex;
-  width: 100%;
-  height: 100%;
+  flex: 1;
+  overflow: hidden;
 }
 
 .editor-section {
@@ -201,7 +332,7 @@ onMounted(async () => {
 }
 
 .panel-header {
-  height: 32px;
+  height: 30px;
   display: flex;
   align-items: center;
   padding: 0 16px;
@@ -211,23 +342,25 @@ onMounted(async () => {
 }
 
 .panel-label {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
   color: var(--text-muted);
 }
 
 .resize-handle {
-  width: 5px;
+  width: 1px;
   cursor: col-resize;
-  background: transparent;
+  background: var(--border);
   position: relative;
   flex-shrink: 0;
   z-index: 10;
+  transition: background 0.15s ease, width 0.15s ease;
 }
 
 .resize-handle:hover {
+  width: 3px;
   background: var(--accent);
 }
 
@@ -235,106 +368,129 @@ onMounted(async () => {
   background: var(--accent);
 }
 
-.resize-line {
-  display: none;
-}
+/* ==================== Welcome Screen ==================== */
 
-/* Welcome screen */
 .welcome {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg-primary);
 }
 
 .welcome-content {
   text-align: center;
-  max-width: 400px;
+  max-width: 360px;
 }
 
-.welcome-icon {
-  width: 64px;
-  height: 64px;
-  background: linear-gradient(135deg, var(--accent), #8b5cf6);
+.welcome-logo {
+  width: 56px;
+  height: 56px;
+  background: var(--accent);
   color: white;
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 700;
-  margin: 0 auto 20px;
-  box-shadow: 0 8px 24px rgba(91, 106, 191, 0.3);
+  margin: 0 auto 24px;
+  font-family: var(--font-serif);
+  letter-spacing: -0.02em;
+  box-shadow: var(--shadow-md);
 }
 
 .welcome h1 {
   margin: 0 0 8px;
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 600;
   color: var(--text-primary);
+  letter-spacing: -0.02em;
 }
 
-.welcome p {
-  margin: 0 0 28px;
+.welcome-subtitle {
+  margin: 0 0 32px;
   color: var(--text-muted);
   font-size: 14px;
+  line-height: 1.5;
 }
 
 .welcome-actions {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   justify-content: center;
-  margin-bottom: 24px;
+  margin-bottom: 32px;
 }
 
-.welcome-btn {
-  display: flex;
+.btn-primary {
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
+  gap: 7px;
+  padding: 9px 18px;
   border: none;
   background: var(--accent);
   color: white;
   border-radius: var(--radius-md);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.12s ease;
 }
 
-.welcome-btn:hover {
+.btn-primary:hover {
   background: var(--accent-hover);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(91, 106, 191, 0.3);
+  box-shadow: var(--shadow-md);
 }
 
-.welcome-btn.secondary {
-  background: var(--bg-secondary);
-  color: var(--text-secondary);
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 18px;
   border: 1px solid var(--border);
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.12s ease;
 }
 
-.welcome-btn.secondary:hover {
-  background: var(--bg-tertiary);
+.btn-ghost:hover {
+  border-color: var(--text-muted);
   color: var(--text-primary);
-  box-shadow: none;
 }
 
-.welcome-shortcuts {
+.welcome-hints {
   display: flex;
-  gap: 20px;
+  gap: 24px;
   justify-content: center;
-  color: var(--text-muted);
-  font-size: 12px;
 }
 
-.welcome-shortcuts kbd {
+.hint-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.hint-item kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 18px;
   background: var(--bg-secondary);
   border: 1px solid var(--border);
   border-radius: 3px;
-  padding: 1px 5px;
+  padding: 0 4px;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.hint-item span {
+  margin-left: 2px;
 }
 </style>
