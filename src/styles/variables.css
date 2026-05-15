@@ -1,0 +1,70 @@
+:root {
+  /* Colors - Light Theme */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f6f8fa;
+  --bg-tertiary: #eef1f5;
+  --bg-sidebar: #f8f9fb;
+  --bg-titlebar: #f0f2f5;
+
+  --text-primary: #1a1a2e;
+  --text-secondary: #4a5568;
+  --text-muted: #8892a4;
+  --text-inverse: #ffffff;
+
+  --accent: #5b6abf;
+  --accent-hover: #4a58a8;
+  --accent-light: rgba(91, 106, 191, 0.1);
+
+  --border: #e2e6ed;
+  --border-focus: #5b6abf;
+
+  --code-bg: #f4f6f9;
+  --code-border: #e2e6ed;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+
+  /* Spacing */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+
+  /* Typography */
+  --font-sans: 'Inter', 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-serif: 'Noto Serif SC', 'Source Han Serif SC', 'STSong', 'Songti SC', Georgia, serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Monaco', 'Menlo', monospace;
+
+  --font-size-base: 16px;
+  --line-height-base: 1.75;
+
+  /* Layout */
+  --titlebar-height: 38px;
+  --sidebar-width: 240px;
+  --statusbar-height: 28px;
+}
+
+[data-theme="dark"] {
+  --bg-primary: #1e2030;
+  --bg-secondary: #252837;
+  --bg-tertiary: #2d3148;
+  --bg-sidebar: #1a1c2a;
+  --bg-titlebar: #171926;
+
+  --text-primary: #e0e4f0;
+  --text-secondary: #a0a8c0;
+  --text-muted: #6b7394;
+  --text-inverse: #1a1a2e;
+
+  --accent: #7c8cf0;
+  --accent-hover: #6b7ce0;
+  --accent-light: rgba(124, 140, 240, 0.12);
+
+  --border: #2d3148;
+  --border-focus: #7c8cf0;
+
+  --code-bg: #252837;
+  --code-border: #2d3148;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+}

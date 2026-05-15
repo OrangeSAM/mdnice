@@ -1,0 +1,288 @@
+.markdown-preview {
+  max-width: var(--preview-max-width, 800px);
+  margin: 0 auto;
+  padding: 32px 28px;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-base, 16px);
+  line-height: var(--line-height-base, 1.75);
+  color: var(--text-primary);
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Headings */
+.markdown-preview h1 {
+  font-size: 2.25em;
+  font-weight: 700;
+  margin-top: 1.5em;
+  margin-bottom: 0.6em;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--border);
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+}
+
+.markdown-preview h2 {
+  font-size: 1.65em;
+  font-weight: 650;
+  margin-top: 1.4em;
+  margin-bottom: 0.5em;
+  padding-bottom: 0.25em;
+  border-bottom: 1px solid var(--border);
+  letter-spacing: -0.01em;
+  line-height: 1.35;
+}
+
+.markdown-preview h3 {
+  font-size: 1.35em;
+  font-weight: 600;
+  margin-top: 1.3em;
+  margin-bottom: 0.4em;
+  line-height: 1.4;
+}
+
+.markdown-preview h4 {
+  font-size: 1.15em;
+  font-weight: 600;
+  margin-top: 1.2em;
+  margin-bottom: 0.4em;
+}
+
+.markdown-preview h5,
+.markdown-preview h6 {
+  font-size: 1em;
+  font-weight: 600;
+  margin-top: 1.1em;
+  margin-bottom: 0.3em;
+  color: var(--text-secondary);
+}
+
+/* Paragraph */
+.markdown-preview p {
+  margin-top: 0;
+  margin-bottom: 1em;
+}
+
+/* Lists */
+.markdown-preview ul,
+.markdown-preview ol {
+  padding-left: 1.8em;
+  margin-top: 0;
+  margin-bottom: 1em;
+}
+
+.markdown-preview li {
+  margin-bottom: 0.35em;
+}
+
+.markdown-preview li > p {
+  margin-bottom: 0.4em;
+}
+
+.markdown-preview li > ul,
+.markdown-preview li > ol {
+  margin-top: 0.35em;
+  margin-bottom: 0;
+}
+
+/* Task lists */
+.markdown-preview .task-list-item {
+  list-style: none;
+  margin-left: -1.5em;
+}
+
+.markdown-preview .task-list-item input[type="checkbox"] {
+  margin-right: 0.5em;
+  accent-color: var(--accent);
+}
+
+/* Code */
+.markdown-preview code {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+}
+
+.markdown-preview :not(pre) > code {
+  background: var(--code-bg);
+  border: 1px solid var(--code-border);
+  border-radius: var(--radius-sm);
+  padding: 0.15em 0.4em;
+  font-size: 0.88em;
+  color: var(--accent);
+}
+
+.markdown-preview pre {
+  background: var(--code-bg);
+  border: 1px solid var(--code-border);
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  overflow-x: auto;
+  margin: 1em 0;
+  line-height: 1.55;
+}
+
+.markdown-preview pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.9em;
+  color: var(--text-primary);
+}
+
+/* Code block language label */
+.markdown-preview pre code .language-label {
+  display: block;
+  font-size: 0.75em;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Blockquote */
+.markdown-preview blockquote {
+  margin: 1em 0;
+  padding: 0.6em 1.2em;
+  border-left: 4px solid var(--accent);
+  background: var(--accent-light);
+  color: var(--text-secondary);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+}
+
+.markdown-preview blockquote p:last-child {
+  margin-bottom: 0;
+}
+
+.markdown-preview blockquote blockquote {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+/* Table */
+.markdown-preview table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1em 0;
+  font-size: 0.95em;
+}
+
+.markdown-preview th,
+.markdown-preview td {
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  text-align: left;
+}
+
+.markdown-preview th {
+  background: var(--bg-secondary);
+  font-weight: 600;
+}
+
+.markdown-preview tr:nth-child(even) {
+  background: var(--bg-secondary);
+}
+
+/* Horizontal rule */
+.markdown-preview hr {
+  border: none;
+  height: 1px;
+  background: var(--border);
+  margin: 2em 0;
+}
+
+/* Image */
+.markdown-preview img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  margin: 0.5em 0;
+}
+
+/* Link */
+.markdown-preview a {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.2s ease;
+}
+
+.markdown-preview a:hover {
+  border-bottom-color: var(--accent);
+}
+
+/* Strong and Em */
+.markdown-preview strong {
+  font-weight: 650;
+  color: var(--text-primary);
+}
+
+.markdown-preview em {
+  font-style: italic;
+}
+
+/* Del */
+.markdown-preview del {
+  color: var(--text-muted);
+}
+
+/* Mark */
+.markdown-preview mark {
+  background: rgba(255, 213, 0, 0.3);
+  padding: 0.1em 0.3em;
+  border-radius: 2px;
+}
+
+/* Footnotes */
+.markdown-preview .footnotes {
+  margin-top: 2em;
+  padding-top: 1em;
+  border-top: 1px solid var(--border);
+  font-size: 0.9em;
+  color: var(--text-secondary);
+}
+
+/* Definition list */
+.markdown-preview dl {
+  margin: 1em 0;
+}
+
+.markdown-preview dt {
+  font-weight: 600;
+  margin-bottom: 0.3em;
+}
+
+.markdown-preview dd {
+  margin-left: 1.5em;
+  margin-bottom: 0.5em;
+}
+
+/* Keyboard input */
+.markdown-preview kbd {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.1em 0.4em;
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  box-shadow: 0 1px 0 var(--border);
+}
+
+/* Scrollbar styling */
+.markdown-preview::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.markdown-preview::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.markdown-preview::-webkit-scrollbar-thumb {
+  background: var(--text-muted);
+  border-radius: 3px;
+}
+
+.markdown-preview::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
