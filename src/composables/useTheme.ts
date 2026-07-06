@@ -4,15 +4,16 @@ import { useAppStore } from '../stores/app'
 const themeMode = ref<'light' | 'dark' | 'system'>('system')
 
 function getSystemTheme(): 'light' | 'dark' {
-  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-    return 'dark'
-  }
-  return 'light'
+  return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+}
+
+/** Resolve any mode (including "system") to a concrete light/dark value. */
+function resolveTheme(mode: 'light' | 'dark' | 'system'): 'light' | 'dark' {
+  return mode === 'system' ? getSystemTheme() : mode
 }
 
 function applyTheme(mode: 'light' | 'dark' | 'system') {
-  const effectiveTheme = mode === 'system' ? getSystemTheme() : mode
-  document.documentElement.setAttribute('data-theme', effectiveTheme)
+  document.documentElement.setAttribute('data-theme', resolveTheme(mode))
 }
 
 export function useTheme() {
@@ -25,26 +26,25 @@ export function useTheme() {
   }
 
   const toggleTheme = () => {
-    const current = document.documentElement.getAttribute('data-theme')
-    setTheme(current === 'dark' ? 'light' : 'dark')
+    setTheme(themeMode.value === 'dark' ? 'light' : 'dark')
   }
 
-  const init = () => {
+  // Sync themeMode when store.settings.theme changes (e.g. after loadSettings)
+  watch(() => store.settings.theme, (t) => {
+    if (t && t !== themeMode.value) {
+      themeMode.value = t as any
+      applyTheme(t as any)
+    }
+  })
+
+  onMounted(() => {
     themeMode.value = (store.settings.theme as any) || 'system'
     applyTheme(themeMode.value)
 
-    // Listen for system theme changes
-    if (window.matchMedia) {
-      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-        if (themeMode.value === 'system') {
-          applyTheme('system')
-        }
-      })
-    }
-  }
-
-  onMounted(() => {
-    init()
+    // Re-sync when the system theme changes while in "system" mode.
+    window.matchMedia?.('(prefers-color-scheme: dark)').addEventListener('change', () => {
+      if (themeMode.value === 'system') applyTheme('system')
+    })
   })
 
   return {

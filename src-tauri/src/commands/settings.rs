@@ -12,6 +12,7 @@ pub struct AppSettings {
     pub editor_width: f64,
     pub preview_max_width: u32,
     pub show_sidebar: bool,
+    pub view_mode: String,
 }
 
 impl Default for AppSettings {
@@ -19,12 +20,13 @@ impl Default for AppSettings {
         Self {
             font_size: 16,
             font_family: "system-ui".into(),
-            line_height: 1.75,
+            line_height: 1.8,
             theme: "system".into(),
             editor_font_size: 14,
             editor_width: 50.0,
             preview_max_width: 800,
             show_sidebar: true,
+            view_mode: "split".into(),
         }
     }
 }
@@ -42,7 +44,13 @@ pub fn load_settings() -> Result<AppSettings, String> {
     if path.exists() {
         let content =
             fs::read_to_string(&path).map_err(|e| format!("Failed to read settings: {}", e))?;
-        serde_json::from_str(&content).map_err(|e| format!("Failed to parse settings: {}", e))
+        let mut settings: AppSettings =
+            serde_json::from_str(&content).map_err(|e| format!("Failed to parse settings: {}", e))?;
+        // Ensure view_mode has a default
+        if settings.view_mode.is_empty() {
+            settings.view_mode = "split".into();
+        }
+        Ok(settings)
     } else {
         Ok(AppSettings::default())
     }

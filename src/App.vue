@@ -1,5 +1,6 @@
 <template>
   <div class="app" :data-theme="currentTheme">
+    <div class="titlebar" data-tauri-drag-region></div>
     <div class="app-body">
       <Sidebar v-if="store.showSidebar" />
       <div class="main-area">
@@ -9,15 +10,46 @@
             <span class="file-name">{{ store.currentFileName }}</span>
           </div>
           <div class="topbar-actions">
+            <!-- View mode toggle -->
+            <div class="view-toggle">
+              <button
+                class="toggle-btn"
+                :class="{ active: store.settings.view_mode === 'editor' }"
+                @click="store.updateSettings({ view_mode: 'editor' })"
+                title="Editor only"
+              >
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                  <rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.2"/>
+                  <path d="M5 6H11M5 8H9M5 10H7" stroke="currentColor" stroke-width="1" stroke-linecap="round"/>
+                </svg>
+              </button>
+              <button
+                class="toggle-btn"
+                :class="{ active: store.settings.view_mode === 'split' }"
+                @click="store.updateSettings({ view_mode: 'split' })"
+                title="Split view"
+              >
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                  <rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.2"/>
+                  <path d="M8 2V14" stroke="currentColor" stroke-width="1"/>
+                </svg>
+              </button>
+              <button
+                class="toggle-btn"
+                :class="{ active: store.settings.view_mode === 'preview' }"
+                @click="store.updateSettings({ view_mode: 'preview' })"
+                title="Preview only"
+              >
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                  <rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.2"/>
+                  <path d="M5 6H11M5 8H11M5 10H8" stroke="currentColor" stroke-width="1" stroke-linecap="round"/>
+                </svg>
+              </button>
+            </div>
+            <div class="topbar-divider"></div>
             <button class="topbar-btn" @click="handleOpen" title="Open File">
               <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
                 <path d="M2 4C2 3.44772 2.44772 3 3 3H6L7.5 5H13C13.5523 5 14 5.44772 14 6V12C14 12.5523 13.5523 13 13 13H3C2.44772 13 2 12.5523 2 12V4Z" stroke="currentColor" stroke-width="1.2"/>
-              </svg>
-            </button>
-            <button class="topbar-btn" @click="handleOpenFolder" title="Open Folder">
-              <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
-                <path d="M2 4C2 3.44772 2.44772 3 3 3H6L7.5 5H13C13.5523 5 14 5.44772 14 6V12C14 12.5523 13.5523 13 13 13H3C2.44772 13 2 12.5523 2 12V4Z" stroke="currentColor" stroke-width="1.2"/>
-                <path d="M2 7H14" stroke="currentColor" stroke-width="1.2"/>
               </svg>
             </button>
             <button class="topbar-btn" @click="handleSave" title="Save" :disabled="!store.isModified">
@@ -38,7 +70,8 @@
           </div>
         </div>
 
-        <div class="split-pane" v-if="store.hasFile">
+        <!-- Split view -->
+        <div class="split-pane" v-if="store.hasFile && store.settings.view_mode === 'split'">
           <div class="editor-section" :style="{ width: `${store.settings.editor_width}%` }">
             <div class="panel-header">
               <span class="panel-label">Markdown</span>
@@ -47,13 +80,21 @@
           </div>
           <div class="resize-handle" @mousedown="startResize"></div>
           <div class="preview-section" :style="{ width: `${100 - store.settings.editor_width}%` }">
-            <div class="panel-header">
-              <span class="panel-label">Preview</span>
-            </div>
             <PreviewPanel />
           </div>
         </div>
 
+        <!-- Editor only -->
+        <div class="single-pane" v-else-if="store.hasFile && store.settings.view_mode === 'editor'">
+          <EditorPanel @update="handleContentUpdate" />
+        </div>
+
+        <!-- Preview only -->
+        <div class="single-pane" v-else-if="store.hasFile && store.settings.view_mode === 'preview'">
+          <PreviewPanel />
+        </div>
+
+        <!-- Welcome -->
         <div class="welcome" v-else>
           <div class="welcome-content">
             <div class="welcome-logo">
@@ -116,6 +157,21 @@ const currentTheme = computed(() => {
     return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
   }
   return themeMode.value
+})
+
+onMounted(async () => {
+  await loadSettings()
+
+  document.addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'o') {
+      e.preventDefault()
+      handleOpenFile()
+    }
+    if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+      e.preventDefault()
+      handleSave()
+    }
+  })
 })
 
 function handleContentUpdate(content: string) {
@@ -191,21 +247,6 @@ function startResize(e: MouseEvent) {
   document.addEventListener('mousemove', onMouseMove)
   document.addEventListener('mouseup', onMouseUp)
 }
-
-onMounted(async () => {
-  await loadSettings()
-
-  document.addEventListener('keydown', (e) => {
-    if ((e.metaKey || e.ctrlKey) && e.key === 'o') {
-      e.preventDefault()
-      handleOpenFile()
-    }
-    if ((e.metaKey || e.ctrlKey) && e.key === 's') {
-      e.preventDefault()
-      handleSave()
-    }
-  })
-})
 </script>
 
 <style scoped>
@@ -214,6 +255,12 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  background: var(--bg-primary);
+}
+
+.titlebar {
+  height: 28px;
+  flex-shrink: 0;
   background: var(--bg-primary);
 }
 
@@ -271,7 +318,7 @@ onMounted(async () => {
 .topbar-actions {
   display: flex;
   align-items: center;
-  gap: 1px;
+  gap: 2px;
 }
 
 .topbar-btn {
@@ -285,7 +332,7 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.12s ease;
+  transition: all 0.1s ease;
 }
 
 .topbar-btn:hover {
@@ -310,9 +357,47 @@ onMounted(async () => {
   margin: 0 4px;
 }
 
+/* View toggle */
+.view-toggle {
+  display: flex;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  padding: 2px;
+  gap: 1px;
+}
+
+.toggle-btn {
+  width: 26px;
+  height: 22px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.1s ease;
+}
+
+.toggle-btn.active {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.toggle-btn:hover:not(.active) {
+  color: var(--text-secondary);
+}
+
 /* Split pane */
 .split-pane {
   display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.single-pane {
   flex: 1;
   overflow: hidden;
 }
@@ -356,7 +441,7 @@ onMounted(async () => {
   position: relative;
   flex-shrink: 0;
   z-index: 10;
-  transition: background 0.15s ease, width 0.15s ease;
+  transition: background 0.12s ease, width 0.12s ease;
 }
 
 .resize-handle:hover {
@@ -383,15 +468,15 @@ onMounted(async () => {
 }
 
 .welcome-logo {
-  width: 56px;
-  height: 56px;
+  width: 52px;
+  height: 52px;
   background: var(--accent);
   color: white;
   border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 700;
   margin: 0 auto 24px;
   font-family: var(--font-serif);

@@ -8,6 +8,8 @@ export interface FileEntry {
   children?: FileEntry[]
 }
 
+export type ViewMode = 'editor' | 'preview' | 'split'
+
 export interface AppSettings {
   font_size: number
   font_family: string
@@ -17,6 +19,7 @@ export interface AppSettings {
   editor_width: number
   preview_max_width: number
   show_sidebar: boolean
+  view_mode: ViewMode
 }
 
 export const useAppStore = defineStore('app', () => {
@@ -30,18 +33,18 @@ export const useAppStore = defineStore('app', () => {
   // UI state
   const showSidebar = ref(true)
   const showSettings = ref(false)
-  const editorWidth = ref(50)
 
   // Settings
   const settings = ref<AppSettings>({
     font_size: 16,
     font_family: 'system-ui',
-    line_height: 1.75,
+    line_height: 1.8,
     theme: 'system',
     editor_font_size: 14,
     editor_width: 50,
     preview_max_width: 800,
     show_sidebar: true,
+    view_mode: 'split',
   })
 
   const hasFile = computed(() => currentFilePath.value !== '')
@@ -62,6 +65,12 @@ export const useAppStore = defineStore('app', () => {
     settings.value = { ...settings.value, ...newSettings }
   }
 
+  function cycleViewMode() {
+    const modes: ViewMode[] = ['editor', 'preview', 'split']
+    const idx = modes.indexOf(settings.value.view_mode)
+    settings.value.view_mode = modes[(idx + 1) % modes.length]
+  }
+
   return {
     currentFilePath,
     currentFileName,
@@ -70,11 +79,11 @@ export const useAppStore = defineStore('app', () => {
     fileTree,
     showSidebar,
     showSettings,
-    editorWidth,
     settings,
     hasFile,
     setContent,
     openFile,
     updateSettings,
+    cycleViewMode,
   }
 })
