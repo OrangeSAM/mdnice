@@ -1,3 +1,17 @@
+/* WebKit's default UA stylesheet puts an 8px margin on <body>, which showed
+   through as a white ring around the window (the app's own theme background
+   only covers #app, a child of body). */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  background: var(--bg-primary);
+}
+
 :root {
   /* Colors - Light Theme (warm white) */
   --bg-primary: #f8f7f4;
