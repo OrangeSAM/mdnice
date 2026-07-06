@@ -77,6 +77,46 @@
               <span class="control-value">{{ store.settings.preview_max_width }}px</span>
             </div>
           </div>
+
+          <div class="settings-group">
+            <label class="settings-label">Updates</label>
+            <div class="control-row">
+              <span class="control-name">Current version</span>
+              <span class="control-value">{{ appVersion || '—' }}</span>
+            </div>
+            <div class="update-row">
+              <div class="update-info">
+                <p class="update-text">{{ updateStatusText }}</p>
+                <p v-if="updateVersion && updateStatus === 'available'" class="update-meta">v{{ updateVersion }} available</p>
+              </div>
+              <button
+                v-if="updateStatus !== 'available'"
+                class="update-btn"
+                @click="handleCheckUpdates"
+                :disabled="updateStatus === 'checking' || updateStatus === 'downloading'"
+              >
+                {{ updateStatus === 'checking' ? 'Checking…' : 'Check' }}
+              </button>
+              <button
+                v-else
+                class="update-btn primary"
+                @click="handleInstallUpdate"
+                :disabled="isInstalling"
+              >
+                {{ isInstalling ? 'Installing…' : 'Install & restart' }}
+              </button>
+            </div>
+          </div>
+
+          <div class="settings-group">
+            <label class="settings-label">About</label>
+            <a class="about-link" href="https://github.com/OrangeSAM/mdnice" target="_blank" rel="noopener noreferrer">
+              <span class="about-link-text">View on GitHub</span>
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                <path d="M5 3H13V11M13 3L3 13" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </a>
+          </div>
         </div>
       </div>
     </div>
@@ -84,8 +124,11 @@
 </template>
 
 <script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
 import { useAppStore } from '../stores/app'
 import { useTheme } from '../composables/useTheme'
+import { useUpdater } from '../composables/useUpdater'
+import { getVersion } from '@tauri-apps/api/app'
 
 const store = useAppStore()
 const { setTheme } = useTheme()
@@ -99,6 +142,64 @@ const themes = [
 function handleThemeChange(value: string) {
   setTheme(value as 'light' | 'dark' | 'system')
 }
+
+// --- Update section ---
+type UpdateStatus = 'idle' | 'checking' | 'available' | 'up-to-date' | 'downloading' | 'error'
+const updateStatus = ref<UpdateStatus>('idle')
+const updateVersion = ref('')
+const updateError = ref('')
+const appVersion = ref('')
+
+const isInstalling = computed(() => updateStatus.value === 'downloading')
+
+const {
+  checkForUpdates,
+  downloadAndInstall,
+  updateAvailable,
+  updateVersion: pendingVersion,
+} = useUpdater()
+
+const updateStatusText = computed(() => {
+  switch (updateStatus.value) {
+    case 'idle': return 'Click "Check" to look for new versions.'
+    case 'checking': return 'Checking for updates…'
+    case 'available': return 'A new version is available.'
+    case 'up-to-date': return 'You’re on the latest version.'
+    case 'downloading': return 'Downloading and installing…'
+    case 'error': return updateError.value || 'Update check failed.'
+  }
+})
+
+async function handleCheckUpdates() {
+  updateStatus.value = 'checking'
+  updateError.value = ''
+  const update = await checkForUpdates()
+  if (update) {
+    updateStatus.value = 'available'
+    updateVersion.value = update.version
+  } else if (updateAvailable.value) {
+    updateStatus.value = 'available'
+    updateVersion.value = pendingVersion.value
+  } else {
+    updateStatus.value = 'up-to-date'
+  }
+}
+
+async function handleInstallUpdate() {
+  updateStatus.value = 'downloading'
+  const ok = await downloadAndInstall()
+  if (!ok) {
+    updateStatus.value = 'error'
+  }
+}
+
+onMounted(async () => {
+  try {
+    appVersion.value = await getVersion()
+  } catch {
+    appVersion.value = '0.1.0'
+  }
+})
 </script>
 
 <style scoped>
@@ -337,6 +438,92 @@ function handleThemeChange(value: string) {
 
 .select-input:focus {
   border-color: var(--border-focus);
+}
+
+/* Update section */
+.update-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 0;
+}
+
+.update-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.update-text {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.update-meta {
+  margin: 2px 0 0;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--accent);
+}
+
+.update-btn {
+  flex-shrink: 0;
+  padding: 5px 12px;
+  border: 1px solid var(--border);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.1s ease;
+}
+
+.update-btn:hover:not(:disabled) {
+  border-color: var(--text-muted);
+}
+
+.update-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.update-btn.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.update-btn.primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+/* About section */
+.about-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+  text-decoration: none;
+  transition: color 0.1s ease;
+}
+
+.about-link:hover {
+  color: var(--accent);
+}
+
+.about-link-text {
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.1s ease;
+}
+
+.about-link:hover .about-link-text {
+  border-bottom-color: var(--accent);
 }
 
 /* Transition */

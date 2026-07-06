@@ -2,3 +2,7 @@
 # will have compiled files and executables
 /target/
 /gen/schemas
+
+# Tauri updater signing keys (private key is also stored as GitHub secret)
+/updater.key
+/updater.key.pub
