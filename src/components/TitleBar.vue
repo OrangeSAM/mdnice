@@ -3,7 +3,7 @@
     <div class="titlebar-drag-region" data-tauri-drag-region>
       <div class="titlebar-title" data-tauri-drag-region>
         <span class="titlebar-icon">M</span>
-        <span class="titlebar-text" data-tauri-drag-region>Markdown Nice</span>
+        <span class="titlebar-text" data-tauri-drag-region>mdnice</span>
         <span v-if="store.isModified" class="titlebar-modified">●</span>
       </div>
     </div>

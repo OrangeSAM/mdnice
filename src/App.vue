@@ -7,7 +7,7 @@
         <div class="app-topbar">
           <div class="topbar-left" data-tauri-drag-region>
             <span class="file-indicator" v-if="store.isModified"></span>
-            <span class="file-name">{{ store.currentFileName || 'Markdown Nice' }}</span>
+            <span class="file-name">{{ store.currentFileName || 'mdnice' }}</span>
           </div>
           <div class="topbar-actions">
             <!-- View mode toggle -->
@@ -100,7 +100,7 @@
             <div class="welcome-logo">
               <span>M</span>
             </div>
-            <h1>Markdown Nice</h1>
+            <h1>mdnice</h1>
             <p class="welcome-subtitle">A quiet place to read and write Markdown.</p>
             <div class="welcome-actions">
               <button class="btn-primary" @click="handleOpenFile">

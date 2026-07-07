@@ -1,6 +1,6 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "Markdown Nice",
+  "productName": "mdnice",
   "version": "0.2.0",
   "identifier": "com.mdnice.app",
   "build": {
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "Markdown Nice",
+        "title": "mdnice",
         "titleBarStyle": "Overlay",
         "hiddenTitle": true,
         "width": 1200,

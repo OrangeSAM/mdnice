@@ -1,4 +1,4 @@
-# Markdown Nice
+# mdnice
 
 一个基于 Tauri v2 + Vue 3 的本地 Markdown 编辑器,内置主题排版与实时预览。
 
@@ -34,13 +34,13 @@ pnpm tauri dev
 应用未经 Apple 签名/公证,macOS 会给它打上 `com.apple.quarantine` 隔离标记,双击时便报「已损坏」。清掉该属性即可正常打开:
 
 ```bash
-xattr -cr "/Applications/Markdown Nice.app"
+xattr -cr "/Applications/mdnice.app"
 ```
 
 本地构建产物同理:
 
 ```bash
-xattr -cr "src-tauri/target/release/bundle/macos/Markdown Nice.app"
+xattr -cr "src-tauri/target/release/bundle/macos/mdnice.app"
 ```
 
 > 权限不足时在命令前加 `sudo`;重新安装或重新下载后需再次执行。
