@@ -68,6 +68,7 @@ xattr -cr "src-tauri/target/release/bundle/macos/Markdown Nice.app"
 ## 相关文档
 
 - [`TITLEBAR_THEME_INVESTIGATION.md`](./TITLEBAR_THEME_INVESTIGATION.md) — 窗口边缘白边问题的排查记录
+- [`docs/notes/product-evolution-2026-07-07.md`](./docs/notes/product-evolution-2026-07-07.md) — 产品演化评估与路线图(v0.2.0, 2026-07-07)
 
 ## 许可
 
