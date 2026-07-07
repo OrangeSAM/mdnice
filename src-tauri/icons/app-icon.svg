@@ -1,0 +1,59 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Premium diagonal blue gradient (replaces flat #2563eb) -->
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5b8def"/>
+      <stop offset="0.45" stop-color="#2563eb"/>
+      <stop offset="1" stop-color="#1e3a8a"/>
+    </linearGradient>
+
+    <!-- Rose brand glow, bottom-right (the app's strong accent color) -->
+    <radialGradient id="roseGlow" cx="0.80" cy="0.86" r="0.62">
+      <stop offset="0" stop-color="#f43f5e" stop-opacity="0.50"/>
+      <stop offset="0.5" stop-color="#e11d48" stop-opacity="0.16"/>
+      <stop offset="1" stop-color="#e11d48" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Top glass highlight for depth -->
+    <linearGradient id="gloss" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.22"/>
+      <stop offset="0.38" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- Rose gradient for the markdown down-arrow -->
+    <linearGradient id="rose" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fda4af"/>
+      <stop offset="0.5" stop-color="#fb7185"/>
+      <stop offset="1" stop-color="#e11d48"/>
+    </linearGradient>
+
+    <!-- Soft shadow plate beneath the mark (simulated, no filter) -->
+    <radialGradient id="markShadow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#0b1a44" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#0b1a44" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Clip to rounded square so glows stay inside corners -->
+    <clipPath id="round">
+      <rect width="1024" height="1024" rx="230" ry="230"/>
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#round)">
+    <!-- base gradient -->
+    <rect width="1024" height="1024" fill="url(#bg)"/>
+    <!-- rose glow -->
+    <rect width="1024" height="1024" fill="url(#roseGlow)"/>
+    <!-- top gloss -->
+    <rect width="1024" height="1024" fill="url(#gloss)"/>
+
+    <!-- subtle shadow under the mark -->
+    <ellipse cx="512" cy="724" rx="330" ry="150" fill="url(#markShadow)"/>
+
+    <!-- White M (refined, optically centered proportions) -->
+    <path d="M 286 640 L 286 200 L 374 200 L 512 400 L 650 200 L 738 200 L 738 640 L 650 640 L 650 310 L 512 510 L 374 310 L 374 640 Z" fill="#ffffff"/>
+
+    <!-- Rose markdown down-arrow, centered beneath the M -->
+    <path d="M 470 670 L 554 670 L 554 750 L 612 750 L 512 850 L 412 750 L 470 750 Z" fill="url(#rose)"/>
+  </g>
+</svg>
