@@ -60,6 +60,7 @@
                 <option value="Georgia">Georgia</option>
                 <option value="Merriweather">Merriweather</option>
                 <option value="Noto Serif SC">Noto Serif SC</option>
+                <option value="LXGW WenKai">霞鹭文楷</option>
               </select>
             </div>
           </div>
