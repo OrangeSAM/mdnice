@@ -1,0 +1,37 @@
+# git-cliff — generate a per-release changelog grouped by conventional-commit
+# type. Invoked from .github/workflows/release.yml on every v* tag.
+# Docs: https://git-cliff.org/docs/configuration
+
+[changelog]
+header = ""
+body = """
+{% for group, commits in commits | group_by(attribute="group") %}
+### {{ group | upper_first }}
+{% for commit in commits -%}
+- {{ commit.message | trim }}
+{% endfor -%}
+{% endfor %}
+"""
+trim = true
+footer = ""
+
+[git]
+conventional_commits = true
+filter_unconventional = true
+require_conventional = false
+split_commits = false
+commit_parsers = [
+  { message = "^chore\\(release\\)", skip = true },
+  { message = "^feat", group = "Features" },
+  { message = "^fix", group = "Bug Fixes" },
+  { message = "^perf", group = "Performance" },
+  { message = "^refactor", group = "Refactor" },
+  { message = "^style", group = "Styling" },
+  { message = "^docs", group = "Documentation" },
+  { message = "^test", group = "Tests" },
+  { message = "^ci", group = "Continuous Integration" },
+  { message = "^chore", group = "Miscellaneous" },
+]
+filter_commits = true
+tag_pattern = "v[0-9].*"
+sort_commits = "oldest"

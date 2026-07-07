@@ -23,6 +23,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -50,6 +52,13 @@ jobs:
       - name: Build frontend
         run: pnpm build
 
+      - name: Generate changelog
+        id: changelog
+        uses: orhun/git-cliff-action@v4
+        with:
+          config: cliff.toml
+          args: --latest --strip header
+
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v1
         env:
@@ -60,7 +69,7 @@ jobs:
           projectPath: src-tauri
           tagName: v__VERSION__
           releaseName: Markdown Nice v__VERSION__
-          releaseBody: '## Changes'
+          releaseBody: ${{ steps.changelog.outputs.content }}
           releaseDraft: true
           prerelease: false
           uploadUpdaterJson: true
