@@ -39,7 +39,7 @@ export const useAppStore = defineStore('app', () => {
     font_size: 16,
     font_family: 'system-ui',
     line_height: 1.8,
-    theme: 'system',
+    theme: 'light',
     editor_font_size: 14,
     editor_width: 50,
     preview_max_width: 800,

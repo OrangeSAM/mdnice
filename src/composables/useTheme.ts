@@ -38,7 +38,7 @@ export function useTheme() {
   })
 
   onMounted(() => {
-    themeMode.value = (store.settings.theme as any) || 'system'
+    themeMode.value = (store.settings.theme as any) || 'light'
     applyTheme(themeMode.value)
 
     // Re-sync when the system theme changes while in "system" mode.
