@@ -5,7 +5,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, shallowRef, computed } from 'vue'
 import { EditorView, keymap, lineNumbers, highlightActiveLine, highlightActiveLineGutter } from '@codemirror/view'
-import { EditorState } from '@codemirror/state'
+import { EditorState, EditorSelection } from '@codemirror/state'
 import { markdown } from '@codemirror/lang-markdown'
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands'
 import { searchKeymap, highlightSelectionMatches } from '@codemirror/search'
@@ -162,6 +162,18 @@ watch(
         },
       })
     }
+  }
+)
+
+// 切换文件时,把光标与滚动重置回顶部,避免停留在上一个文件的阅读位置
+watch(
+  () => store.currentFilePath,
+  () => {
+    if (!editorView.value) return
+    editorView.value.dispatch({
+      selection: EditorSelection.single(0),
+      scrollIntoView: true,
+    })
   }
 )
 </script>
