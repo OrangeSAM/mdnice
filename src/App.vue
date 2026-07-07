@@ -1,10 +1,10 @@
 <template>
-  <div class="app" :data-theme="currentTheme">
-    <div class="titlebar" data-tauri-drag-region></div>
+  <div class="app" :data-theme="currentTheme" :class="{ immersive: store.immersive }" @mousemove="handleMouseMove">
+    <div class="titlebar" data-tauri-drag-region v-if="!store.immersive"></div>
     <div class="app-body">
-      <Sidebar v-if="store.showSidebar" />
+      <Sidebar v-if="store.showSidebar && !store.immersive" />
       <div class="main-area">
-        <div class="app-topbar">
+        <div class="app-topbar" v-if="!store.immersive">
           <div class="topbar-left" data-tauri-drag-region>
             <span class="file-indicator" v-if="store.isModified"></span>
             <span class="file-name">{{ store.currentFileName || 'mdnice' }}</span>
@@ -70,8 +70,13 @@
           </div>
         </div>
 
+        <!-- Immersive: 预览占满 -->
+        <div class="single-pane" v-if="store.immersive && store.hasFile">
+          <PreviewPanel />
+        </div>
+
         <!-- Split view -->
-        <div class="split-pane" v-if="store.hasFile && store.settings.view_mode === 'split'">
+        <div class="split-pane" v-else-if="store.hasFile && store.settings.view_mode === 'split'">
           <div class="editor-section" :style="{ width: `${store.settings.editor_width}%` }">
             <div class="panel-header">
               <span class="panel-label">Markdown</span>
@@ -126,10 +131,19 @@
                 <kbd>⌘</kbd><kbd>S</kbd>
                 <span>Save</span>
               </div>
+              <div class="hint-item">
+                <kbd>⌘</kbd><kbd>⇧</kbd><kbd>I</kbd>
+                <span>Immersive</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
+    </div>
+    <!-- 沉浸式:鼠标移到顶部浮现的精简顶栏 -->
+    <div class="floating-topbar" v-if="store.immersive" :class="{ visible: topbarHover }">
+      <span class="floating-filename">{{ store.currentFileName || 'mdnice' }}</span>
+      <button class="floating-exit" @click="store.toggleImmersive" title="Exit (Esc)">Exit</button>
     </div>
     <SettingsPanel />
   </div>
@@ -159,6 +173,13 @@ const currentTheme = computed(() => {
   return themeMode.value
 })
 
+const topbarHover = ref(false)
+function handleMouseMove(e: MouseEvent) {
+  if (store.immersive) {
+    topbarHover.value = e.clientY < 40
+  }
+}
+
 onMounted(async () => {
   await loadSettings()
 
@@ -170,6 +191,14 @@ onMounted(async () => {
     if ((e.metaKey || e.ctrlKey) && e.key === 's') {
       e.preventDefault()
       handleSave()
+    }
+    if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'i') {
+      e.preventDefault()
+      store.toggleImmersive()
+    }
+    if (e.key === 'Escape' && store.immersive) {
+      e.preventDefault()
+      store.toggleImmersive()
     }
   })
 })
@@ -577,5 +606,55 @@ function startResize(e: MouseEvent) {
 
 .hint-item span {
   margin-left: 2px;
+}
+
+/* ==================== Immersive Mode ==================== */
+
+.floating-topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px 0 80px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  transform: translateY(-100%);
+  transition: transform 0.2s ease;
+  z-index: 50;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.floating-topbar.visible {
+  transform: translateY(0);
+}
+
+.floating-filename {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.floating-exit {
+  padding: 4px 12px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.floating-exit:hover {
+  border-color: var(--text-muted);
+  color: var(--text-primary);
 }
 </style>

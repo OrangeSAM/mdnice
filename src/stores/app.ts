@@ -1,4 +1,4 @@
-import { defineStore } from 'pinia'
+import { defineStore, acceptHMRUpdate } from 'pinia'
 import { ref, computed } from 'vue'
 
 export interface FileEntry {
@@ -33,6 +33,7 @@ export const useAppStore = defineStore('app', () => {
   // UI state
   const showSidebar = ref(true)
   const showSettings = ref(false)
+  const immersive = ref(false)
 
   // Settings
   const settings = ref<AppSettings>({
@@ -71,6 +72,16 @@ export const useAppStore = defineStore('app', () => {
     settings.value.view_mode = modes[(idx + 1) % modes.length]
   }
 
+  // 沉浸式阅读:隐藏所有 chrome,预览占满。不改 view_mode,退出后自然恢复原视图
+  function toggleImmersive() {
+    if (immersive.value) {
+      immersive.value = false
+    } else {
+      if (!hasFile.value) return
+      immersive.value = true
+    }
+  }
+
   return {
     currentFilePath,
     currentFileName,
@@ -85,5 +96,12 @@ export const useAppStore = defineStore('app', () => {
     openFile,
     updateSettings,
     cycleViewMode,
+    immersive,
+    toggleImmersive,
   }
 })
+
+// 让 store 改动支持 HMR,否则新增/修改的 action 不会热更新到运行中的实例
+if (import.meta.hot) {
+  import.meta.hot.accept(acceptHMRUpdate(useAppStore, import.meta.hot))
+}
