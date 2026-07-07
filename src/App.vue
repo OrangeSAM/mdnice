@@ -4,14 +4,14 @@
     <div class="app-body">
       <Sidebar v-if="store.showSidebar" />
       <div class="main-area">
-        <div class="app-topbar" v-if="store.hasFile">
+        <div class="app-topbar">
           <div class="topbar-left" data-tauri-drag-region>
             <span class="file-indicator" v-if="store.isModified"></span>
-            <span class="file-name">{{ store.currentFileName }}</span>
+            <span class="file-name">{{ store.currentFileName || 'Markdown Nice' }}</span>
           </div>
           <div class="topbar-actions">
             <!-- View mode toggle -->
-            <div class="view-toggle">
+            <div class="view-toggle" v-if="store.hasFile">
               <button
                 class="toggle-btn"
                 :class="{ active: store.settings.view_mode === 'editor' }"
@@ -46,13 +46,13 @@
                 </svg>
               </button>
             </div>
-            <div class="topbar-divider"></div>
+            <div class="topbar-divider" v-if="store.hasFile"></div>
             <button class="topbar-btn" @click="handleOpen" title="Open File">
               <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
                 <path d="M2 4C2 3.44772 2.44772 3 3 3H6L7.5 5H13C13.5523 5 14 5.44772 14 6V12C14 12.5523 13.5523 13 13 13H3C2.44772 13 2 12.5523 2 12V4Z" stroke="currentColor" stroke-width="1.2"/>
               </svg>
             </button>
-            <button class="topbar-btn" @click="handleSave" title="Save" :disabled="!store.isModified">
+            <button class="topbar-btn" @click="handleSave" title="Save" :disabled="!store.isModified" v-if="store.hasFile">
               <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
                 <path d="M3 2H10L13 5V13C13 13.5523 12.5523 14 12 14H3C2.44772 14 2 13.5523 2 13V3C2 2.44772 2.44772 2 3 2Z" stroke="currentColor" stroke-width="1.2"/>
                 <path d="M5 2V6H9V2" stroke="currentColor" stroke-width="1.2"/>
