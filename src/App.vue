@@ -47,7 +47,7 @@
               </button>
             </div>
             <div class="topbar-divider" v-if="store.hasFile"></div>
-            <button class="topbar-btn" @click="handleOpen" title="Open File">
+            <button class="topbar-btn" @click="handleOpen" title="Open File" v-if="store.hasFile">
               <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
                 <path d="M2 4C2 3.44772 2.44772 3 3 3H6L7.5 5H13C13.5523 5 14 5.44772 14 6V12C14 12.5523 13.5523 13 13 13H3C2.44772 13 2 12.5523 2 12V4Z" stroke="currentColor" stroke-width="1.2"/>
               </svg>
@@ -60,7 +60,7 @@
                 <path d="M5 11H8" stroke="currentColor" stroke-width="1.2"/>
               </svg>
             </button>
-            <div class="topbar-divider"></div>
+            <div class="topbar-divider" v-if="store.hasFile"></div>
             <button class="topbar-btn" @click="store.showSettings = !store.showSettings" title="Settings">
               <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
                 <path d="M8 10C9.10457 10 10 9.10457 10 8C10 6.89543 9.10457 6 8 6C6.89543 6 6 6.89543 6 8C6 9.10457 6.89543 10 8 10Z" stroke="currentColor" stroke-width="1.2"/>

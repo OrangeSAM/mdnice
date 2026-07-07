@@ -21,7 +21,7 @@
         <path d="M2 4C2 3.44772 2.44772 3 3 3H6L7.5 5H13C13.5523 5 14 5.44772 14 6V12C14 12.5523 13.5523 13 13 13H3C2.44772 13 2 12.5523 2 12V4Z" stroke="currentColor" stroke-width="1.2"/>
         <path d="M2 7H14" stroke="currentColor" stroke-width="1.2"/>
       </svg>
-      <button class="empty-btn" @click="handleOpenFolder">Open a folder</button>
+      <span class="empty-hint">No folder open</span>
     </div>
   </div>
 </template>
@@ -125,19 +125,8 @@ async function handleOpenFolder() {
   color: var(--border);
 }
 
-.empty-btn {
-  padding: 5px 14px;
-  border: 1px solid var(--border);
-  background: transparent;
-  color: var(--text-muted);
-  border-radius: var(--radius-md);
+.empty-hint {
   font-size: 12px;
-  cursor: pointer;
-  transition: all 0.12s ease;
-}
-
-.empty-btn:hover {
-  border-color: var(--text-muted);
-  color: var(--text-secondary);
+  color: var(--text-muted);
 }
 </style>
