@@ -160,7 +160,6 @@ import EditorPanel from './components/EditorPanel.vue'
 import PreviewPanel from './components/PreviewPanel.vue'
 import SettingsPanel from './components/SettingsPanel.vue'
 import { open } from '@tauri-apps/plugin-dialog'
-import { readTextFile } from '@tauri-apps/plugin-fs'
 import { invoke } from '@tauri-apps/api/core'
 
 const store = useAppStore()
@@ -222,7 +221,7 @@ async function handleOpenFile() {
     })
     if (selected) {
       const path = selected as string
-      const content = await readTextFile(path)
+      const content = await invoke<string>('read_file', { path })
       const name = path.split('/').pop() || path
       store.openFile(path, name, content)
     }
@@ -260,7 +259,7 @@ async function restoreLastSession() {
   }
   if (store.lastFilePath) {
     try {
-      const content = await readTextFile(store.lastFilePath)
+      const content = await invoke<string>('read_file', { path: store.lastFilePath })
       const name = store.lastFilePath.split('/').pop() || store.lastFilePath
       // 标记 PreviewPanel:这次 render 完成后恢复到上次位置,而非回顶
       store.pendingScrollRestore = store.lastScrollTop
