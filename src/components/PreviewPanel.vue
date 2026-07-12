@@ -1,6 +1,8 @@
 <template>
   <div class="preview-panel">
-    <div class="preview-content markdown-preview" ref="previewContent" v-html="renderedContent"></div>
+    <div class="preview-content" ref="previewContent">
+      <div class="markdown-preview" v-html="renderedContent"></div>
+    </div>
   </div>
 </template>
 
@@ -67,6 +69,11 @@ if (store.fileContent) {
   background: var(--bg-primary);
 }
 
+/* 滚动容器:必须是纯视口(height:100% + overflow,自身无 padding)。
+   之前把 .preview-content 和 .markdown-preview 合并在同一元素上,content-box
+   下 height:100% + padding 会让 padding-box 超出父级视口,底部内容落入父级
+   overflow:hidden 的裁切区,导致最后一行滚不到。内容 padding 移到内层
+   .markdown-preview(见 styles/preview.css),自然包含在滚动流里。 */
 .preview-content {
   height: 100%;
   overflow-y: auto;
