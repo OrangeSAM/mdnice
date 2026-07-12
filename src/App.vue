@@ -154,6 +154,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useAppStore } from './stores/app'
 import { useTheme } from './composables/useTheme'
 import { useSettings } from './composables/useSettings'
+import { useSession } from './composables/useSession'
 import Sidebar from './components/Sidebar.vue'
 import EditorPanel from './components/EditorPanel.vue'
 import PreviewPanel from './components/PreviewPanel.vue'
@@ -165,6 +166,7 @@ import { invoke } from '@tauri-apps/api/core'
 const store = useAppStore()
 const { themeMode } = useTheme()
 const { loadSettings } = useSettings()
+const { loadSession } = useSession()
 
 const currentTheme = computed(() => {
   if (themeMode.value === 'system') {
@@ -182,6 +184,8 @@ function handleMouseMove(e: MouseEvent) {
 
 onMounted(async () => {
   await loadSettings()
+  await loadSession()
+  await restoreLastSession()
 
   document.addEventListener('keydown', (e) => {
     if ((e.metaKey || e.ctrlKey) && e.key === 'o') {
@@ -233,6 +237,7 @@ async function handleOpenFolder() {
     if (selected) {
       const entries = await invoke<any[]>('read_folder', { path: selected as string })
       store.fileTree = entries
+      store.setSession({ lastFolderPath: selected as string })
     }
   } catch (e) {
     console.error('Open folder failed:', e)
@@ -241,6 +246,29 @@ async function handleOpenFolder() {
 
 async function handleOpen() {
   await handleOpenFile()
+}
+
+// 启动时恢复上次的目录/文件/阅读位置;文件或目录失效则静默回退欢迎页
+async function restoreLastSession() {
+  if (store.lastFolderPath) {
+    try {
+      const entries = await invoke<any[]>('read_folder', { path: store.lastFolderPath })
+      store.fileTree = entries
+    } catch (e) {
+      store.clearSession({ lastFolderPath: true })
+    }
+  }
+  if (store.lastFilePath) {
+    try {
+      const content = await readTextFile(store.lastFilePath)
+      const name = store.lastFilePath.split('/').pop() || store.lastFilePath
+      // 标记 PreviewPanel:这次 render 完成后恢复到上次位置,而非回顶
+      store.pendingScrollRestore = store.lastScrollTop
+      store.openFile(store.lastFilePath, name, content)
+    } catch (e) {
+      store.clearSession({ lastFilePath: true, lastScrollTop: true })
+    }
+  }
 }
 
 async function handleSave() {

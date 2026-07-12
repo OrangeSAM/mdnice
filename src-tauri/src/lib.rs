@@ -16,6 +16,8 @@ pub fn run() {
             commands::file::read_folder,
             commands::settings::load_settings,
             commands::settings::save_settings,
+            commands::session::load_session,
+            commands::session::save_session,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

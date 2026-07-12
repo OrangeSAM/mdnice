@@ -30,6 +30,13 @@ export const useAppStore = defineStore('app', () => {
   const isModified = ref(false)
   const fileTree = ref<FileEntry[]>([])
 
+  // Session state (持久化到 session.json,启动时恢复上次目录/文件/阅读位置)
+  const lastFolderPath = ref<string>('')
+  const lastFilePath = ref<string>('')
+  const lastScrollTop = ref<number>(0)
+  // 启动恢复时由 App.vue 设置,PreviewPanel render 完成后读取并清空(一次性)
+  const pendingScrollRestore = ref<number | null>(null)
+
   // UI state
   const showSidebar = ref(true)
   const showSettings = ref(false)
@@ -60,6 +67,21 @@ export const useAppStore = defineStore('app', () => {
     currentFileName.value = name
     fileContent.value = content
     isModified.value = false
+    lastFilePath.value = path
+  }
+
+  // 更新 session 字段(camelCase;useSession 在与 Rust 交互的边界做 snake_case 转换)
+  function setSession(partial: Partial<{ lastFolderPath: string; lastFilePath: string; lastScrollTop: number }>) {
+    if (partial.lastFolderPath !== undefined) lastFolderPath.value = partial.lastFolderPath
+    if (partial.lastFilePath !== undefined) lastFilePath.value = partial.lastFilePath
+    if (partial.lastScrollTop !== undefined) lastScrollTop.value = partial.lastScrollTop
+  }
+
+  // 容错回退:清掉失效的 session 字段(传入 true 表示清除该项)
+  function clearSession(partial: { lastFolderPath?: boolean; lastFilePath?: boolean; lastScrollTop?: boolean }) {
+    if (partial.lastFolderPath) lastFolderPath.value = ''
+    if (partial.lastFilePath) lastFilePath.value = ''
+    if (partial.lastScrollTop) lastScrollTop.value = 0
   }
 
   function updateSettings(newSettings: Partial<AppSettings>) {
@@ -88,6 +110,12 @@ export const useAppStore = defineStore('app', () => {
     fileContent,
     isModified,
     fileTree,
+    lastFolderPath,
+    lastFilePath,
+    lastScrollTop,
+    pendingScrollRestore,
+    setSession,
+    clearSession,
     showSidebar,
     showSettings,
     settings,
