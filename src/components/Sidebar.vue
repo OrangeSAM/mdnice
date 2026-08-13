@@ -2,11 +2,19 @@
   <div class="sidebar">
     <div class="sidebar-header">
       <span class="sidebar-title">Files</span>
-      <button class="sidebar-action" @click="handleOpenFolder" title="Open Folder">
-        <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-          <path d="M8 3V13M3 8H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-        </svg>
-      </button>
+      <div class="sidebar-actions">
+        <button class="sidebar-action" @click="handleOpenFolder" title="Open Folder">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+            <path d="M2 4C2 3.44772 2.44772 3 3 3H6L7.5 5H13C13.5523 5 14 5.44772 14 6V12C14 12.5523 13.5523 13 13 13H3C2.44772 13 2 12.5523 2 12V4Z" stroke="currentColor" stroke-width="1.2"/>
+            <path d="M2 7H14" stroke="currentColor" stroke-width="1.2"/>
+          </svg>
+        </button>
+        <button class="sidebar-action" v-if="store.fileTree.length" @click="handleCloseFolder" title="Close Folder">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+            <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
     </div>
     <div class="sidebar-content" v-if="store.fileTree.length">
       <FileTreeItem
@@ -40,10 +48,15 @@ async function handleOpenFolder() {
     if (selected) {
       const entries = await invoke<any[]>('read_folder', { path: selected as string })
       store.fileTree = entries
+      store.setSession({ lastFolderPath: selected as string })
     }
   } catch (e) {
     console.error('Open folder failed:', e)
   }
+}
+
+function handleCloseFolder() {
+  store.closeFolder()
 }
 </script>
 
@@ -72,6 +85,12 @@ async function handleOpenFolder() {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--text-muted);
+}
+
+.sidebar-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
 }
 
 .sidebar-action {

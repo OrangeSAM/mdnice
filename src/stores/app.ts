@@ -84,6 +84,18 @@ export const useAppStore = defineStore('app', () => {
     if (partial.lastScrollTop) lastScrollTop.value = 0
   }
 
+  // 关闭当前目录并回到初始状态(欢迎页):清空文件树、当前文件,并清掉 session 记录,
+  // 否则下次启动又会自动恢复这个目录
+  function closeFolder() {
+    currentFilePath.value = ''
+    currentFileName.value = ''
+    fileContent.value = ''
+    isModified.value = false
+    fileTree.value = []
+    pendingScrollRestore.value = null
+    clearSession({ lastFolderPath: true, lastFilePath: true, lastScrollTop: true })
+  }
+
   function updateSettings(newSettings: Partial<AppSettings>) {
     settings.value = { ...settings.value, ...newSettings }
   }
@@ -116,6 +128,7 @@ export const useAppStore = defineStore('app', () => {
     pendingScrollRestore,
     setSession,
     clearSession,
+    closeFolder,
     showSidebar,
     showSettings,
     settings,
