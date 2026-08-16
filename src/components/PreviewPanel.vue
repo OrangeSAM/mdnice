@@ -11,6 +11,7 @@ import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { useAppStore } from '../stores/app'
 import { debounce } from 'lodash-es'
 import MarkdownIt from 'markdown-it'
+import cjkEmphasisPlugin from '../markdown-it-cjk'
 
 const store = useAppStore()
 const renderedContent = ref('')
@@ -21,7 +22,7 @@ const md = new MarkdownIt({
   linkify: true,
   typographer: true,
   breaks: true,
-})
+}).use(cjkEmphasisPlugin)
 
 function renderMarkdown(content: string): string {
   if (!content) return ''
