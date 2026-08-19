@@ -2,7 +2,7 @@
   <div class="app" :data-theme="currentTheme" :class="{ immersive: store.immersive }" @mousemove="handleMouseMove">
     <div class="titlebar" data-tauri-drag-region v-if="!store.immersive"></div>
     <div class="app-body">
-      <Sidebar v-if="store.showSidebar && !store.immersive" />
+      <Sidebar v-if="store.showSidebar && (store.hasFile || store.fileTree.length) && !store.immersive" />
       <div class="main-area">
         <div class="app-topbar" v-if="!store.immersive">
           <div class="topbar-left" data-tauri-drag-region>
@@ -10,6 +10,29 @@
             <span class="file-name">{{ store.currentFileName || 'mdnice' }}</span>
           </div>
           <div class="topbar-actions">
+            <button
+              class="topbar-btn"
+              v-if="store.hasFile || store.fileTree.length"
+              @click="store.toggleSidebar()"
+              :title="store.showSidebar ? 'Hide sidebar' : 'Show sidebar'"
+            >
+              <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+                <rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.2"/>
+                <path d="M6 2V14" stroke="currentColor" stroke-width="1.2"/>
+              </svg>
+            </button>
+            <button
+              class="topbar-btn"
+              v-if="store.hasFile || store.fileTree.length"
+              @click="handleHome"
+              title="Home"
+            >
+              <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+                <path d="M2 7L8 2L14 7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M3.5 6.5V13H12.5V6.5" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <div class="topbar-divider" v-if="store.hasFile || store.fileTree.length"></div>
             <!-- View mode toggle -->
             <div class="view-toggle" v-if="store.hasFile">
               <button
@@ -99,7 +122,7 @@
           <PreviewPanel />
         </div>
 
-        <!-- Welcome -->
+        <!-- Home -->
         <div class="welcome" v-else>
           <div class="welcome-content">
             <div class="welcome-logo">
@@ -122,6 +145,38 @@
                 Open Folder
               </button>
             </div>
+
+            <!-- Recent shelf -->
+            <div class="recent" v-if="store.recentItems.length">
+              <div class="recent-header">
+                <span class="recent-title">Recent</span>
+              </div>
+              <div class="recent-list">
+                <div
+                  class="recent-item"
+                  v-for="item in store.recentItems"
+                  :key="item.path"
+                  @click="openRecentItem(item)"
+                >
+                  <span class="recent-icon">
+                    <svg v-if="item.is_dir" width="14" height="14" viewBox="0 0 16 16" fill="none">
+                      <path d="M2 4C2 3.44772 2.44772 3 3 3H6L7.5 5H13C13.5523 5 14 5.44772 14 6V12C14 12.5523 13.5523 13 13 13H3C2.44772 13 2 12.5523 2 12V4Z" stroke="currentColor" stroke-width="1.2"/>
+                    </svg>
+                    <svg v-else width="14" height="14" viewBox="0 0 16 16" fill="none">
+                      <path d="M4 2H10L12 4V14H4V2Z" stroke="currentColor" stroke-width="1.2"/>
+                      <path d="M10 2V4H12" stroke="currentColor" stroke-width="1.2"/>
+                    </svg>
+                  </span>
+                  <span class="recent-name">{{ item.name }}</span>
+                  <button class="recent-remove" @click.stop="store.removeRecent(item.path)" title="Remove from recent">
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                      <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+
             <div class="welcome-hints">
               <div class="hint-item">
                 <kbd>⌘</kbd><kbd>O</kbd>
@@ -184,7 +239,6 @@ function handleMouseMove(e: MouseEvent) {
 onMounted(async () => {
   await loadSettings()
   await loadSession()
-  await restoreLastSession()
 
   document.addEventListener('keydown', (e) => {
     if ((e.metaKey || e.ctrlKey) && e.key === 'o') {
@@ -235,8 +289,7 @@ async function handleOpenFolder() {
     const selected = await open({ directory: true, multiple: false })
     if (selected) {
       const entries = await invoke<any[]>('read_folder', { path: selected as string })
-      store.fileTree = entries
-      store.setSession({ lastFolderPath: selected as string })
+      store.openFolder(selected as string, entries)
     }
   } catch (e) {
     console.error('Open folder failed:', e)
@@ -247,27 +300,29 @@ async function handleOpen() {
   await handleOpenFile()
 }
 
-// 启动时恢复上次的目录/文件/阅读位置;文件或目录失效则静默回退欢迎页
-async function restoreLastSession() {
-  if (store.lastFolderPath) {
-    try {
-      const entries = await invoke<any[]>('read_folder', { path: store.lastFolderPath })
-      store.fileTree = entries
-    } catch (e) {
-      store.clearSession({ lastFolderPath: true })
+// 点击书架项打开;文件/目录失效则静默从书架移除
+async function openRecentItem(item: { name: string; path: string; is_dir: boolean }) {
+  try {
+    if (item.is_dir) {
+      const entries = await invoke<any[]>('read_folder', { path: item.path })
+      store.openFolder(item.path, entries)
+    } else {
+      const content = await invoke<string>('read_file', { path: item.path })
+      // 若是上次读的文件,恢复阅读位置
+      if (item.path === store.lastFilePath) {
+        store.pendingScrollRestore = store.lastScrollTop
+      }
+      store.openFile(item.path, item.name, content)
     }
+  } catch (e) {
+    console.error('Open recent item failed:', e)
+    store.removeRecent(item.path)
   }
-  if (store.lastFilePath) {
-    try {
-      const content = await invoke<string>('read_file', { path: store.lastFilePath })
-      const name = store.lastFilePath.split('/').pop() || store.lastFilePath
-      // 标记 PreviewPanel:这次 render 完成后恢复到上次位置,而非回顶
-      store.pendingScrollRestore = store.lastScrollTop
-      store.openFile(store.lastFilePath, name, content)
-    } catch (e) {
-      store.clearSession({ lastFilePath: true, lastScrollTop: true })
-    }
-  }
+}
+
+// 返回首页:清空当前文件/目录,保留书架
+function handleHome() {
+  store.closeFolder()
 }
 
 async function handleSave() {
@@ -514,8 +569,10 @@ function startResize(e: MouseEvent) {
 .welcome {
   flex: 1;
   display: flex;
-  align-items: center;
+  align-items: safe center;
   justify-content: center;
+  overflow-y: auto;
+  padding: 32px 0;
 }
 
 .welcome-content {
@@ -633,6 +690,101 @@ function startResize(e: MouseEvent) {
 
 .hint-item span {
   margin-left: 2px;
+}
+
+/* ==================== Recent Shelf ==================== */
+
+.recent {
+  margin-bottom: 32px;
+  text-align: left;
+}
+
+.recent-header {
+  margin-bottom: 8px;
+}
+
+.recent-title {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.recent-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.recent-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.recent-list::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 2px;
+}
+
+.recent-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: background 0.1s ease;
+}
+
+.recent-item:hover {
+  background: var(--bg-secondary);
+}
+
+.recent-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.recent-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+.recent-remove {
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: all 0.1s ease;
+  flex-shrink: 0;
+}
+
+.recent-item:hover .recent-remove {
+  opacity: 1;
+}
+
+.recent-remove:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
 }
 
 /* ==================== Immersive Mode ==================== */

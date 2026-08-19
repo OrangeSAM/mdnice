@@ -14,6 +14,13 @@
             <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
           </svg>
         </button>
+        <button class="sidebar-action" @click="store.toggleSidebar()" title="Hide sidebar">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+            <rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.2"/>
+            <path d="M6 2V14" stroke="currentColor" stroke-width="1.2"/>
+            <path d="M10 6L8 8L10 10" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
       </div>
     </div>
     <div class="sidebar-content" v-if="store.fileTree.length">
@@ -47,8 +54,7 @@ async function handleOpenFolder() {
     const selected = await open({ directory: true, multiple: false })
     if (selected) {
       const entries = await invoke<any[]>('read_folder', { path: selected as string })
-      store.fileTree = entries
-      store.setSession({ lastFolderPath: selected as string })
+      store.openFolder(selected as string, entries)
     }
   } catch (e) {
     console.error('Open folder failed:', e)

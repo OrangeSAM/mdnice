@@ -12,6 +12,8 @@ export function useSettings() {
       const settings = await invoke<AppSettings>('load_settings')
       store.updateSettings(settings)
       applySettings(settings)
+      // 侧边栏可见性持久化在 settings 里,启动时一次性同步到 UI state
+      store.showSidebar = settings.show_sidebar
     } catch (e) {
       console.error('Failed to load settings:', e)
     } finally {

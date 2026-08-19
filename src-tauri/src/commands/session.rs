@@ -2,6 +2,14 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
 
+/// 「最近」书架的一项:文件或文件夹。
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct RecentItem {
+    pub name: String,
+    pub path: String,
+    pub is_dir: bool,
+}
+
 /// 上次会话的运行状态(与用户偏好的 settings.json 分离)。
 /// file_content / file_tree 不持久化:启动时从磁盘重读,拿到最新内容。
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -9,6 +17,10 @@ pub struct SessionState {
     pub last_folder_path: String,
     pub last_file_path: String,
     pub last_scroll_top: f64,
+    /// 最近打开过的文件/文件夹(书架),最近优先。
+    /// #[serde(default)] 保证旧 session.json 缺字段时仍能反序列化。
+    #[serde(default)]
+    pub recent_items: Vec<RecentItem>,
 }
 
 fn session_path() -> Result<PathBuf, String> {

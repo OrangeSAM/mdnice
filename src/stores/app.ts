@@ -8,6 +8,13 @@ export interface FileEntry {
   children?: FileEntry[]
 }
 
+// 「最近」书架的一项:文件或文件夹(与 Rust RecentItem 对齐)
+export interface RecentItem {
+  name: string
+  path: string
+  is_dir: boolean
+}
+
 export type ViewMode = 'editor' | 'preview' | 'split'
 
 export interface AppSettings {
@@ -36,6 +43,10 @@ export const useAppStore = defineStore('app', () => {
   const lastScrollTop = ref<number>(0)
   // 启动恢复时由 App.vue 设置,PreviewPanel render 完成后读取并清空(一次性)
   const pendingScrollRestore = ref<number | null>(null)
+
+  // 最近书架(最近优先,去重,上限 MAX_RECENT)
+  const recentItems = ref<RecentItem[]>([])
+  const MAX_RECENT = 20
 
   // UI state
   const showSidebar = ref(true)
@@ -68,6 +79,30 @@ export const useAppStore = defineStore('app', () => {
     fileContent.value = content
     isModified.value = false
     lastFilePath.value = path
+    pushRecent({ name, path, is_dir: false })
+  }
+
+  // 打开文件夹:设置目录树、记录上次目录、进书架
+  function openFolder(path: string, entries: FileEntry[]) {
+    fileTree.value = entries
+    setSession({ lastFolderPath: path })
+    pushRecent({ name: path.split('/').pop() || path, path, is_dir: true })
+  }
+
+  // 最近书架:去重 + 置顶 + 截断
+  function pushRecent(item: RecentItem) {
+    recentItems.value = [
+      item,
+      ...recentItems.value.filter((r) => r.path !== item.path),
+    ].slice(0, MAX_RECENT)
+  }
+
+  function removeRecent(path: string) {
+    recentItems.value = recentItems.value.filter((r) => r.path !== path)
+  }
+
+  function setRecentItems(items: RecentItem[]) {
+    recentItems.value = items
   }
 
   // 更新 session 字段(camelCase;useSession 在与 Rust 交互的边界做 snake_case 转换)
@@ -100,6 +135,12 @@ export const useAppStore = defineStore('app', () => {
     settings.value = { ...settings.value, ...newSettings }
   }
 
+  // 侧边栏开关:翻转 UI state 并同步到 settings(借助 settings 深层 watcher 自动持久化)
+  function toggleSidebar() {
+    showSidebar.value = !showSidebar.value
+    settings.value.show_sidebar = showSidebar.value
+  }
+
   function cycleViewMode() {
     const modes: ViewMode[] = ['editor', 'preview', 'split']
     const idx = modes.indexOf(settings.value.view_mode)
@@ -126,6 +167,10 @@ export const useAppStore = defineStore('app', () => {
     lastFilePath,
     lastScrollTop,
     pendingScrollRestore,
+    recentItems,
+    pushRecent,
+    removeRecent,
+    setRecentItems,
     setSession,
     clearSession,
     closeFolder,
@@ -135,8 +180,10 @@ export const useAppStore = defineStore('app', () => {
     hasFile,
     setContent,
     openFile,
+    openFolder,
     updateSettings,
     cycleViewMode,
+    toggleSidebar,
     immersive,
     toggleImmersive,
   }
