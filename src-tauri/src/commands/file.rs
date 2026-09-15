@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
+use std::sync::Mutex;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct FileEntry {
@@ -8,6 +9,26 @@ pub struct FileEntry {
     pub path: String,
     pub is_dir: bool,
     pub children: Option<Vec<FileEntry>>,
+}
+
+/// 通过文件关联 / 命令行参数打开、但前端尚未消费的文件路径队列
+pub static PENDING_OPEN_FILES: Mutex<Vec<String>> = Mutex::new(Vec::new());
+
+/// 过滤出 Markdown 文件路径并加入待打开队列
+pub fn push_pending_open_file(path: String) {
+    let lower = path.to_lowercase();
+    let is_md = ["md", "markdown", "mdx", "mdown", "mkd"]
+        .iter()
+        .any(|ext| lower.ends_with(&format!(".{}", ext)));
+    if is_md {
+        PENDING_OPEN_FILES.lock().unwrap().push(path);
+    }
+}
+
+/// 前端拉取待打开的文件路径 (取走即清空)
+#[tauri::command]
+pub fn take_pending_open_files() -> Vec<String> {
+    std::mem::take(&mut PENDING_OPEN_FILES.lock().unwrap())
 }
 
 #[tauri::command]

@@ -216,6 +216,7 @@ import PreviewPanel from './components/PreviewPanel.vue'
 import SettingsPanel from './components/SettingsPanel.vue'
 import { open } from '@tauri-apps/plugin-dialog'
 import { invoke } from '@tauri-apps/api/core'
+import { listen } from '@tauri-apps/api/event'
 
 const store = useAppStore()
 const { themeMode } = useTheme()
@@ -239,6 +240,12 @@ function handleMouseMove(e: MouseEvent) {
 onMounted(async () => {
   await loadSettings()
   await loadSession()
+
+  // 启动时消费一次; 之后 app 运行中右键打开文件会触发 open-file 事件
+  await openPendingFiles()
+  await listen('open-file', () => {
+    openPendingFiles()
+  })
 
   document.addEventListener('keydown', (e) => {
     if ((e.metaKey || e.ctrlKey) && e.key === 'o') {
@@ -317,6 +324,20 @@ async function openRecentItem(item: { name: string; path: string; is_dir: boolea
   } catch (e) {
     console.error('Open recent item failed:', e)
     store.removeRecent(item.path)
+  }
+}
+
+// 文件关联 / 命令行参数打开: 从 Rust 拉取待打开路径并加载
+async function openPendingFiles() {
+  try {
+    const paths = await invoke<string[]>('take_pending_open_files')
+    for (const path of paths) {
+      const content = await invoke<string>('read_file', { path })
+      const name = path.split('/').pop() || path.split('\\').pop() || path
+      store.openFile(path, name, content)
+    }
+  } catch (e) {
+    console.error('Open pending files failed:', e)
   }
 }
 
