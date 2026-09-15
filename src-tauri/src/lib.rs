@@ -37,6 +37,7 @@ pub fn run() {
         .expect("error while building tauri application")
         .run(|app, event| {
             // macOS: Finder 右键打开文件走 Opened 事件; app 已运行时也会触发
+            #[cfg(target_os = "macos")]
             if let RunEvent::Opened { urls } = &event {
                 for url in urls {
                     // url 形如 file:///path/to.md, 转成本地路径
@@ -50,7 +51,7 @@ pub fn run() {
                     let _ = window.emit::<()>("open-file", ());
                 }
             }
-            // macOS: 首次启动由 Finder 带文件打开, args 里也会有路径
+            // 首次启动由命令行参数 / Finder 带文件打开
             if let RunEvent::Ready = event {
                 for arg in std::env::args().skip(1) {
                     push_pending_open_file(arg);
