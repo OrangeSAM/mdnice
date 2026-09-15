@@ -7,7 +7,7 @@
         <div class="app-topbar" v-if="!store.immersive">
           <div class="topbar-left" data-tauri-drag-region>
             <span class="file-indicator" v-if="store.isModified"></span>
-            <span class="file-name">{{ store.currentFileName || 'mdnice' }}</span>
+            <span class="file-name">{{ store.currentFileName || 'Mdnice' }}</span>
           </div>
           <div class="topbar-actions">
             <button
@@ -128,7 +128,7 @@
             <div class="welcome-logo">
               <span>M</span>
             </div>
-            <h1>mdnice</h1>
+            <h1>Mdnice</h1>
             <p class="welcome-subtitle">A quiet place to read and write Markdown.</p>
             <div class="welcome-actions">
               <button class="btn-primary" @click="handleOpenFile">
@@ -197,7 +197,7 @@
     </div>
     <!-- 沉浸式:鼠标移到顶部浮现的精简顶栏 -->
     <div class="floating-topbar" v-if="store.immersive" :class="{ visible: topbarHover }">
-      <span class="floating-filename">{{ store.currentFileName || 'mdnice' }}</span>
+      <span class="floating-filename">{{ store.currentFileName || 'Mdnice' }}</span>
       <button class="floating-exit" @click="store.toggleImmersive" title="Exit (Esc)">Exit</button>
     </div>
     <SettingsPanel />

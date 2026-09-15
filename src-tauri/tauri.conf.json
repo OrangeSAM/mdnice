@@ -1,6 +1,6 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "mdnice",
+  "productName": "Mdnice",
   "version": "0.6.0",
   "identifier": "com.mdnice.app",
   "build": {
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "mdnice",
+        "title": "Mdnice",
         "titleBarStyle": "Overlay",
         "hiddenTitle": true,
         "width": 1200,
@@ -31,6 +31,15 @@
     "active": true,
     "targets": "all",
     "createUpdaterArtifacts": true,
+    "fileAssociations": [
+      {
+        "ext": ["md", "markdown", "mdx"],
+        "name": "Markdown 文档",
+        "description": "使用 Mdnice 打开 Markdown 文档",
+        "mimeType": "text/markdown",
+        "role": "Editor"
+      }
+    ],
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
