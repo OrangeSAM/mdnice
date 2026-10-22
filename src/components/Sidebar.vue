@@ -110,7 +110,9 @@ function handleCloseFolder() {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 120px;
+  flex: 1;
+  min-width: 0;
+  margin-right: 8px;
 }
 
 .sidebar-actions {

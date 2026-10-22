@@ -14,6 +14,9 @@ export function useSettings() {
       applySettings(settings)
       // 侧边栏可见性持久化在 settings 里,启动时一次性同步到 UI state
       store.showSidebar = settings.show_sidebar
+      if (settings.sidebar_width) {
+        store.sidebarWidth = settings.sidebar_width
+      }
     } catch (e) {
       console.error('Failed to load settings:', e)
     } finally {
@@ -35,6 +38,9 @@ export function useSettings() {
     root.style.setProperty('--line-height-base', `${settings.line_height}`)
     root.style.setProperty('--editor-font-size', `${settings.editor_font_size}px`)
     root.style.setProperty('--preview-max-width', `${settings.preview_max_width}px`)
+
+    const sidebarW = settings.sidebar_width || store.sidebarWidth || 220
+    root.style.setProperty('--sidebar-width', `${sidebarW}px`)
 
     if (settings.font_family && settings.font_family !== 'system-ui') {
       root.style.setProperty('--font-sans', `${settings.font_family}, system-ui, sans-serif`)

@@ -26,6 +26,7 @@ export interface AppSettings {
   editor_width: number
   preview_max_width: number
   show_sidebar: boolean
+  sidebar_width?: number
   view_mode: ViewMode
 }
 
@@ -53,6 +54,16 @@ export const useAppStore = defineStore('app', () => {
   const showSettings = ref(false)
   const immersive = ref(false)
   const showToc = ref(true)
+  const sidebarWidth = ref<number>(
+    Number(localStorage.getItem('mdnice_sidebar_width')) || 220
+  )
+
+  function setSidebarWidth(width: number) {
+    const clamped = Math.max(160, Math.min(600, Math.round(width)))
+    sidebarWidth.value = clamped
+    localStorage.setItem('mdnice_sidebar_width', String(clamped))
+    updateSettings({ sidebar_width: clamped })
+  }
 
   // Settings
   const settings = ref<AppSettings>({
@@ -64,6 +75,7 @@ export const useAppStore = defineStore('app', () => {
     editor_width: 50,
     preview_max_width: 800,
     show_sidebar: true,
+    sidebar_width: 220,
     view_mode: 'split',
   })
 
@@ -182,6 +194,8 @@ export const useAppStore = defineStore('app', () => {
     clearSession,
     closeFolder,
     showSidebar,
+    sidebarWidth,
+    setSidebarWidth,
     showSettings,
     showToc,
     toggleToc,

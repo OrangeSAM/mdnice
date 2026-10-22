@@ -68,6 +68,11 @@
           <div class="settings-group">
             <label class="settings-label">Layout</label>
             <div class="control-row">
+              <span class="control-name">Sidebar width</span>
+              <input type="range" :min="160" :max="450" :step="10" :value="store.sidebarWidth" @input="store.setSidebarWidth(Number(($event.target as HTMLInputElement).value))" class="range-input" />
+              <span class="control-value">{{ store.sidebarWidth }}px</span>
+            </div>
+            <div class="control-row">
               <span class="control-name">Editor width</span>
               <input type="range" :min="20" :max="80" :step="5" v-model.number="store.settings.editor_width" class="range-input" />
               <span class="control-value">{{ store.settings.editor_width }}%</span>

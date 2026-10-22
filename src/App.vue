@@ -2,7 +2,17 @@
   <div class="app" :data-theme="currentTheme" :class="{ immersive: store.immersive }" @mousemove="handleMouseMove">
     <div class="titlebar" data-tauri-drag-region v-if="!store.immersive"></div>
     <div class="app-body">
-      <Sidebar v-if="store.showSidebar && (store.hasFile || store.fileTree.length) && !store.immersive" />
+      <Sidebar
+        v-if="store.showSidebar && (store.hasFile || store.fileTree.length) && !store.immersive"
+        :style="{ width: `${store.sidebarWidth}px` }"
+      />
+      <div
+        v-if="store.showSidebar && (store.hasFile || store.fileTree.length) && !store.immersive"
+        class="sidebar-resize-handle"
+        @mousedown="startSidebarResize"
+        @dblclick="resetSidebarWidth"
+        title="Drag to resize sidebar, double click to reset"
+      ></div>
       <div class="main-area">
         <div class="app-topbar" v-if="!store.immersive">
           <div class="topbar-left" data-tauri-drag-region>
@@ -426,6 +436,34 @@ function startResize(e: MouseEvent) {
   document.addEventListener('mousemove', onMouseMove)
   document.addEventListener('mouseup', onMouseUp)
 }
+
+function startSidebarResize(e: MouseEvent) {
+  e.preventDefault()
+  const startX = e.clientX
+  const startWidth = store.sidebarWidth
+
+  document.body.style.cursor = 'col-resize'
+  document.body.style.userSelect = 'none'
+
+  function onMouseMove(e: MouseEvent) {
+    const delta = e.clientX - startX
+    store.setSidebarWidth(startWidth + delta)
+  }
+
+  function onMouseUp() {
+    document.body.style.cursor = ''
+    document.body.style.userSelect = ''
+    document.removeEventListener('mousemove', onMouseMove)
+    document.removeEventListener('mouseup', onMouseUp)
+  }
+
+  document.addEventListener('mousemove', onMouseMove)
+  document.addEventListener('mouseup', onMouseUp)
+}
+
+function resetSidebarWidth() {
+  store.setSidebarWidth(220)
+}
 </script>
 
 <style scoped>
@@ -634,6 +672,32 @@ function startResize(e: MouseEvent) {
 }
 
 .resize-handle:active {
+  background: var(--accent);
+}
+
+.sidebar-resize-handle {
+  width: 1px;
+  cursor: col-resize;
+  background: var(--border);
+  position: relative;
+  flex-shrink: 0;
+  z-index: 15;
+  transition: background 0.12s ease, width 0.12s ease;
+}
+
+.sidebar-resize-handle::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -4px;
+  right: -4px;
+  cursor: col-resize;
+}
+
+.sidebar-resize-handle:hover,
+.sidebar-resize-handle:active {
+  width: 3px;
   background: var(--accent);
 }
 

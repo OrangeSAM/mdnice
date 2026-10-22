@@ -2,6 +2,10 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
 
+fn default_sidebar_width() -> f64 {
+    220.0
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AppSettings {
     pub font_size: u32,
@@ -12,6 +16,8 @@ pub struct AppSettings {
     pub editor_width: f64,
     pub preview_max_width: u32,
     pub show_sidebar: bool,
+    #[serde(default = "default_sidebar_width")]
+    pub sidebar_width: f64,
     pub view_mode: String,
 }
 
@@ -26,6 +32,7 @@ impl Default for AppSettings {
             editor_width: 50.0,
             preview_max_width: 800,
             show_sidebar: true,
+            sidebar_width: 220.0,
             view_mode: "split".into(),
         }
     }
