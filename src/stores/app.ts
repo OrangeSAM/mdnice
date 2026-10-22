@@ -83,9 +83,11 @@ export const useAppStore = defineStore('app', () => {
     pushRecent({ name, path, is_dir: false })
   }
 
-  // 打开文件夹:设置目录树、记录上次目录、进书架
+  // 打开文件夹:设置目录树、确保侧边栏展开、记录上次目录、进书架
   function openFolder(path: string, entries: FileEntry[]) {
     fileTree.value = entries
+    showSidebar.value = true
+    settings.value.show_sidebar = true
     setSession({ lastFolderPath: path })
     pushRecent({ name: path.split('/').pop() || path, path, is_dir: true })
   }

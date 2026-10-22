@@ -1,7 +1,7 @@
 <template>
   <div class="sidebar">
     <div class="sidebar-header">
-      <span class="sidebar-title">Files</span>
+      <span class="sidebar-title" :title="store.lastFolderPath || 'Files'">{{ folderTitle }}</span>
       <div class="sidebar-actions">
         <button class="sidebar-action" @click="handleOpenFolder" title="Open Folder">
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
@@ -42,12 +42,20 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useAppStore } from '../stores/app'
 import { open } from '@tauri-apps/plugin-dialog'
 import { invoke } from '@tauri-apps/api/core'
+import { findFirstMarkdownFile } from '../utils/file'
 import FileTreeItem from './FileTreeItem.vue'
 
 const store = useAppStore()
+
+const folderTitle = computed(() => {
+  if (!store.lastFolderPath) return 'Files'
+  const name = store.lastFolderPath.split('/').pop() || store.lastFolderPath.split('\\').pop()
+  return name || 'Files'
+})
 
 async function handleOpenFolder() {
   try {
@@ -55,6 +63,14 @@ async function handleOpenFolder() {
     if (selected) {
       const entries = await invoke<any[]>('read_folder', { path: selected as string })
       store.openFolder(selected as string, entries)
+      // 若当前没有打开文件，自动打开该目录下的第一个 Markdown 文件
+      if (!store.hasFile) {
+        const firstFile = findFirstMarkdownFile(entries)
+        if (firstFile) {
+          const content = await invoke<string>('read_file', { path: firstFile.path })
+          store.openFile(firstFile.path, firstFile.name, content)
+        }
+      }
     }
   } catch (e) {
     console.error('Open folder failed:', e)
@@ -91,6 +107,10 @@ function handleCloseFolder() {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 120px;
 }
 
 .sidebar-actions {

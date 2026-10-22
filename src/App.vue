@@ -142,6 +142,9 @@
             </div>
             <h1>Mdnice</h1>
             <p class="welcome-subtitle">A quiet place to read and write Markdown.</p>
+            <p class="welcome-folder-hint" v-if="store.fileTree.length && store.lastFolderPath">
+              Current folder: <strong>{{ store.lastFolderPath.split('/').pop() || store.lastFolderPath.split('\\').pop() }}</strong>
+            </p>
             <div class="welcome-actions">
               <button class="btn-primary" @click="handleOpenFile">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -241,6 +244,7 @@ import SettingsPanel from './components/SettingsPanel.vue'
 import { open } from '@tauri-apps/plugin-dialog'
 import { invoke } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
+import { findFirstMarkdownFile } from './utils/file'
 
 const store = useAppStore()
 const { themeMode } = useTheme()
@@ -325,6 +329,14 @@ async function handleOpenFolder() {
     if (selected) {
       const entries = await invoke<any[]>('read_folder', { path: selected as string })
       store.openFolder(selected as string, entries)
+      // 若当前没有打开文件，自动打开该目录下的第一个 Markdown 文件
+      if (!store.hasFile) {
+        const firstFile = findFirstMarkdownFile(entries)
+        if (firstFile) {
+          const content = await invoke<string>('read_file', { path: firstFile.path })
+          store.openFile(firstFile.path, firstFile.name, content)
+        }
+      }
     }
   } catch (e) {
     console.error('Open folder failed:', e)
@@ -341,6 +353,13 @@ async function openRecentItem(item: { name: string; path: string; is_dir: boolea
     if (item.is_dir) {
       const entries = await invoke<any[]>('read_folder', { path: item.path })
       store.openFolder(item.path, entries)
+      if (!store.hasFile) {
+        const firstFile = findFirstMarkdownFile(entries)
+        if (firstFile) {
+          const content = await invoke<string>('read_file', { path: firstFile.path })
+          store.openFile(firstFile.path, firstFile.name, content)
+        }
+      }
     } else {
       const content = await invoke<string>('read_file', { path: item.path })
       // 若是上次读的文件,恢复阅读位置
@@ -660,10 +679,20 @@ function startResize(e: MouseEvent) {
 }
 
 .welcome-subtitle {
-  margin: 0 0 32px;
+  margin: 0 0 20px;
   color: var(--text-muted);
   font-size: 14px;
   line-height: 1.5;
+}
+
+.welcome-folder-hint {
+  margin: -10px 0 24px;
+  font-size: 12px;
+  color: var(--accent);
+  background: var(--accent-light);
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  display: inline-block;
 }
 
 .welcome-actions {

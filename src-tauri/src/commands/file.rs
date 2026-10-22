@@ -58,34 +58,44 @@ pub fn read_folder(path: String) -> Result<Vec<FileEntry>, String> {
         return Err(format!("Not a directory: {}", path));
     }
 
+    let read_dir = match fs::read_dir(&dir_path) {
+        Ok(rd) => rd,
+        Err(e) => return Err(format!("Failed to read directory: {}", e)),
+    };
+
     let mut entries = Vec::new();
-    let read_dir = fs::read_dir(&dir_path).map_err(|e| format!("Failed to read directory: {}", e))?;
 
     for entry in read_dir {
-        let entry = entry.map_err(|e| format!("Failed to read entry: {}", e))?;
-        let metadata = entry
-            .metadata()
-            .map_err(|e| format!("Failed to read metadata: {}", e))?;
+        // 单个 entry 读取失败时跳过，避免个别异常文件阻断整个目录
+        let Ok(entry) = entry else { continue };
 
         let name = entry.file_name().to_string_lossy().to_string();
 
-        // Skip hidden files
-        if name.starts_with('.') {
+        // 忽略以 . 开头的隐藏项，以及 node_modules / target / dist 等大型目录
+        if name.starts_with('.') || name == "node_modules" || name == "target" || name == "dist" {
             continue;
         }
 
-        let path = entry.path().to_string_lossy().to_string();
-        let is_dir = metadata.is_dir();
+        // 使用 symlink_metadata / file_type 检查，避免软链接循环导致递归爆栈
+        let Ok(file_type) = entry.file_type() else { continue };
+        let is_symlink = file_type.is_symlink();
+        let is_dir = if is_symlink {
+            false // 软链接目录不进行深层递归，防止死循环
+        } else {
+            file_type.is_dir()
+        };
+
+        let path_str = entry.path().to_string_lossy().to_string();
 
         let children = if is_dir {
-            Some(read_folder(path.clone()).unwrap_or_default())
+            Some(read_folder(path_str.clone()).unwrap_or_default())
         } else {
             None
         };
 
         entries.push(FileEntry {
             name,
-            path,
+            path: path_str,
             is_dir,
             children,
         });
