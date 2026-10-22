@@ -70,6 +70,18 @@
               </button>
             </div>
             <div class="topbar-divider" v-if="store.hasFile"></div>
+            <!-- Outline toggle -->
+            <button
+              class="topbar-btn"
+              :class="{ active: store.showToc }"
+              v-if="store.hasFile && store.settings.view_mode !== 'editor'"
+              @click="store.toggleToc()"
+              :title="store.showToc ? 'Hide outline (⌘⇧O)' : 'Show outline (⌘⇧O)'"
+            >
+              <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+                <path d="M2.5 3.5H13.5M2.5 8H13.5M2.5 12.5H8.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+              </svg>
+            </button>
             <button class="topbar-btn" @click="handleOpen" title="Open File" v-if="store.hasFile">
               <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
                 <path d="M2 4C2 3.44772 2.44772 3 3 3H6L7.5 5H13C13.5523 5 14 5.44772 14 6V12C14 12.5523 13.5523 13 13 13H3C2.44772 13 2 12.5523 2 12V4Z" stroke="currentColor" stroke-width="1.2"/>
@@ -198,7 +210,19 @@
     <!-- 沉浸式:鼠标移到顶部浮现的精简顶栏 -->
     <div class="floating-topbar" v-if="store.immersive" :class="{ visible: topbarHover }">
       <span class="floating-filename">{{ store.currentFileName || 'Mdnice' }}</span>
-      <button class="floating-exit" @click="store.toggleImmersive" title="Exit (Esc)">Exit</button>
+      <div class="floating-actions">
+        <button
+          class="floating-btn"
+          :class="{ active: store.showToc }"
+          @click="store.toggleToc()"
+          title="Toggle outline (⌘⇧O)"
+        >
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+            <path d="M2.5 3.5H13.5M2.5 8H13.5M2.5 12.5H8.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <button class="floating-exit" @click="store.toggleImmersive" title="Exit (Esc)">Exit</button>
+      </div>
     </div>
     <SettingsPanel />
   </div>
@@ -259,6 +283,10 @@ onMounted(async () => {
     if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'i') {
       e.preventDefault()
       store.toggleImmersive()
+    }
+    if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'o') {
+      e.preventDefault()
+      store.toggleToc()
     }
     if (e.key === 'Escape' && store.immersive) {
       e.preventDefault()
@@ -470,6 +498,11 @@ function startResize(e: MouseEvent) {
 .topbar-btn:hover {
   background: var(--bg-tertiary);
   color: var(--text-primary);
+}
+
+.topbar-btn.active {
+  background: var(--accent-light);
+  color: var(--accent);
 }
 
 .topbar-btn:disabled {
@@ -840,6 +873,38 @@ function startResize(e: MouseEvent) {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.floating-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.floating-btn {
+  width: 26px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.floating-btn:hover {
+  border-color: var(--text-muted);
+  color: var(--text-primary);
+  background: var(--bg-tertiary);
+}
+
+.floating-btn.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-light);
 }
 
 .floating-exit {

@@ -3,6 +3,13 @@
     <div class="preview-content" ref="previewContent">
       <div class="markdown-preview" v-html="renderedContent"></div>
     </div>
+    <!-- 阅读大纲浮动面板：绝对定位在右侧，完全脱离正文流，不影响正文物理居中 -->
+    <TocPanel
+      v-if="store.hasFile && headings.length > 0"
+      :headings="headings"
+      :active-id="activeHeadingId"
+      @select="scrollToHeading"
+    />
   </div>
 </template>
 
@@ -12,25 +19,90 @@ import { useAppStore } from '../stores/app'
 import { debounce } from 'lodash-es'
 import MarkdownIt from 'markdown-it'
 import cjkEmphasisPlugin from '../markdown-it-cjk'
+import headingAnchorPlugin, { type HeadingItem, type MarkdownEnv } from '../markdown-it-heading-anchor'
+import TocPanel from './TocPanel.vue'
 
 const store = useAppStore()
 const renderedContent = ref('')
 const previewContent = ref<HTMLElement>()
+const headings = ref<HeadingItem[]>([])
+const activeHeadingId = ref<string>('')
 
 const md = new MarkdownIt({
   html: true,
   linkify: true,
   typographer: true,
   breaks: true,
-}).use(cjkEmphasisPlugin)
+})
+  .use(cjkEmphasisPlugin)
+  .use(headingAnchorPlugin)
 
 function renderMarkdown(content: string): string {
-  if (!content) return ''
+  if (!content) {
+    headings.value = []
+    activeHeadingId.value = ''
+    return ''
+  }
   try {
-    return md.render(content)
+    const env: MarkdownEnv = {
+      headings: [],
+      _headingCount: 0,
+    }
+    const html = md.render(content, env)
+    headings.value = env.headings || []
+    return html
   } catch (e) {
     console.error('Markdown render error:', e)
+    headings.value = []
+    activeHeadingId.value = ''
     return `<p style="color: var(--error);">Render error</p>`
+  }
+}
+
+// 点击大纲项跳转到对应标题并短暂高亮反馈
+function scrollToHeading(id: string) {
+  if (!previewContent.value) return
+  const target = previewContent.value.querySelector(`#${id}`) as HTMLElement | null
+  if (target) {
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    activeHeadingId.value = id
+    // 添加平滑淡出高亮反馈
+    target.classList.add('heading-focus-highlight')
+    setTimeout(() => {
+      target.classList.remove('heading-focus-highlight')
+    }, 1200)
+  }
+}
+
+// ScrollSpy: 滚动时根据视口位置更新当前阅读章节
+function updateActiveHeading() {
+  if (!previewContent.value || headings.value.length === 0) return
+  const container = previewContent.value
+  const containerRect = container.getBoundingClientRect()
+  // 视口上方缓冲区 (80px)
+  const triggerTop = containerRect.top + 80
+
+  let currentId = ''
+  for (let i = 0; i < headings.value.length; i++) {
+    const h = headings.value[i]
+    const el = container.querySelector(`#${h.id}`) as HTMLElement | null
+    if (el) {
+      const rect = el.getBoundingClientRect()
+      if (rect.top <= triggerTop) {
+        currentId = h.id
+      } else {
+        break
+      }
+    }
+  }
+
+  // 若还没滚到第一个标题且在页面顶端，默认激活第一个标题
+  if (!currentId && headings.value.length > 0) {
+    currentId = headings.value[0].id
+  }
+
+  if (activeHeadingId.value !== currentId) {
+    activeHeadingId.value = currentId
   }
 }
 
@@ -54,18 +126,31 @@ const debouncedRender = debounce((content: string) => {
       pendingFileSwitch = false
       previewContent.value.scrollTop = 0
     }
+    updateActiveHeading()
   })
 }, 100)
 
-// 滚动时记录位置;节流由 useSession 的 debounce 负责,停止滚动 500ms 后才持久化
+let scrollTicking = false
+// 滚动时记录位置并执行 ScrollSpy 追踪当前章节
 function handleScroll() {
   if (previewContent.value) {
     store.lastScrollTop = previewContent.value.scrollTop
+  }
+
+  if (!scrollTicking) {
+    requestAnimationFrame(() => {
+      updateActiveHeading()
+      scrollTicking = false
+    })
+    scrollTicking = true
   }
 }
 
 onMounted(() => {
   previewContent.value?.addEventListener('scroll', handleScroll, { passive: true })
+  nextTick(() => {
+    updateActiveHeading()
+  })
 })
 
 onUnmounted(() => {
@@ -82,11 +167,15 @@ watch(
 
 if (store.fileContent) {
   renderedContent.value = renderMarkdown(store.fileContent)
+  nextTick(() => {
+    updateActiveHeading()
+  })
 }
 </script>
 
 <style scoped>
 .preview-panel {
+  position: relative;
   height: 100%;
   overflow: hidden;
   background: var(--bg-primary);

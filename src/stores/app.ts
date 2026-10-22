@@ -52,6 +52,7 @@ export const useAppStore = defineStore('app', () => {
   const showSidebar = ref(true)
   const showSettings = ref(false)
   const immersive = ref(false)
+  const showToc = ref(true)
 
   // Settings
   const settings = ref<AppSettings>({
@@ -141,6 +142,10 @@ export const useAppStore = defineStore('app', () => {
     settings.value.show_sidebar = showSidebar.value
   }
 
+  function toggleToc() {
+    showToc.value = !showToc.value
+  }
+
   function cycleViewMode() {
     const modes: ViewMode[] = ['editor', 'preview', 'split']
     const idx = modes.indexOf(settings.value.view_mode)
@@ -176,6 +181,8 @@ export const useAppStore = defineStore('app', () => {
     closeFolder,
     showSidebar,
     showSettings,
+    showToc,
+    toggleToc,
     settings,
     hasFile,
     setContent,
