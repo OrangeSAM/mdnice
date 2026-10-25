@@ -3,11 +3,20 @@
     <div class="preview-content" ref="previewContent">
       <div class="markdown-preview" v-html="renderedContent"></div>
     </div>
-    <!-- 阅读大纲浮动面板：绝对定位在右侧，完全脱离正文流，不影响正文物理居中 -->
+    <!-- 大纲侧边栏拖拽把手 -->
+    <div
+      v-if="store.hasFile && store.showToc && headings.length > 0"
+      class="toc-resize-handle"
+      @mousedown="startTocResize"
+      @dblclick="resetTocWidth"
+      title="Drag to resize outline, double click to reset"
+    ></div>
+    <!-- 阅读大纲实体侧边栏：真实占位，绝不遮挡正文 -->
     <TocPanel
-      v-if="store.hasFile && headings.length > 0"
+      v-if="store.hasFile && store.showToc && headings.length > 0"
       :headings="headings"
       :active-id="activeHeadingId"
+      :style="{ width: `${store.tocWidth}px` }"
       @select="scrollToHeading"
     />
   </div>
@@ -66,7 +75,6 @@ function scrollToHeading(id: string) {
   if (target) {
     target.scrollIntoView({ behavior: 'smooth', block: 'start' })
     activeHeadingId.value = id
-    // 添加平滑淡出高亮反馈
     target.classList.add('heading-focus-highlight')
     setTimeout(() => {
       target.classList.remove('heading-focus-highlight')
@@ -79,7 +87,6 @@ function updateActiveHeading() {
   if (!previewContent.value || headings.value.length === 0) return
   const container = previewContent.value
   const containerRect = container.getBoundingClientRect()
-  // 视口上方缓冲区 (80px)
   const triggerTop = containerRect.top + 80
 
   let currentId = ''
@@ -96,7 +103,6 @@ function updateActiveHeading() {
     }
   }
 
-  // 若还没滚到第一个标题且在页面顶端，默认激活第一个标题
   if (!currentId && headings.value.length > 0) {
     currentId = headings.value[0].id
   }
@@ -106,7 +112,37 @@ function updateActiveHeading() {
   }
 }
 
-// 切换文件时,预览滚动回到顶部(render 完成后再重置,避免被 v-html 更新保留的旧 scrollTop 覆盖)
+// 拖拽调整大纲侧边栏宽度
+function startTocResize(e: MouseEvent) {
+  e.preventDefault()
+  const startX = e.clientX
+  const startWidth = store.tocWidth
+
+  document.body.style.cursor = 'col-resize'
+  document.body.style.userSelect = 'none'
+
+  function onMouseMove(e: MouseEvent) {
+    // 大纲栏位于右侧，向左拖动（clientX 变小）应增加宽度
+    const delta = startX - e.clientX
+    store.setTocWidth(startWidth + delta)
+  }
+
+  function onMouseUp() {
+    document.body.style.cursor = ''
+    document.body.style.userSelect = ''
+    document.removeEventListener('mousemove', onMouseMove)
+    document.removeEventListener('mouseup', onMouseUp)
+  }
+
+  document.addEventListener('mousemove', onMouseMove)
+  document.addEventListener('mouseup', onMouseUp)
+}
+
+function resetTocWidth() {
+  store.setTocWidth(240)
+}
+
+// 切换文件时,预览滚动回到顶部
 let pendingFileSwitch = false
 watch(() => store.currentFilePath, () => {
   pendingFileSwitch = true
@@ -114,11 +150,9 @@ watch(() => store.currentFilePath, () => {
 
 const debouncedRender = debounce((content: string) => {
   renderedContent.value = renderMarkdown(content)
-  // render 完成后再处理滚动,避免被 v-html 更新保留的旧 scrollTop 覆盖
   nextTick(() => {
     if (!previewContent.value) return
     if (store.pendingScrollRestore !== null) {
-      // 启动恢复:回到上次阅读位置(优先于切文件回顶)
       previewContent.value.scrollTop = store.pendingScrollRestore
       store.pendingScrollRestore = null
       pendingFileSwitch = false
@@ -131,7 +165,6 @@ const debouncedRender = debounce((content: string) => {
 }, 100)
 
 let scrollTicking = false
-// 滚动时记录位置并执行 ScrollSpy 追踪当前章节
 function handleScroll() {
   if (previewContent.value) {
     store.lastScrollTop = previewContent.value.scrollTop
@@ -175,18 +208,15 @@ if (store.fileContent) {
 
 <style scoped>
 .preview-panel {
-  position: relative;
   height: 100%;
+  display: flex;
   overflow: hidden;
   background: var(--bg-primary);
 }
 
-/* 滚动容器:必须是纯视口(height:100% + overflow,自身无 padding)。
-   之前把 .preview-content 和 .markdown-preview 合并在同一元素上,content-box
-   下 height:100% + padding 会让 padding-box 超出父级视口,底部内容落入父级
-   overflow:hidden 的裁切区,导致最后一行滚不到。内容 padding 移到内层
-   .markdown-preview(见 styles/preview.css),自然包含在滚动流里。 */
 .preview-content {
+  flex: 1;
+  min-width: 0;
   height: 100%;
   overflow-y: auto;
 }
@@ -206,5 +236,31 @@ if (store.fileContent) {
 
 .preview-content::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
+}
+
+.toc-resize-handle {
+  width: 1px;
+  cursor: col-resize;
+  background: var(--border);
+  position: relative;
+  flex-shrink: 0;
+  z-index: 10;
+  transition: background 0.12s ease, width 0.12s ease;
+}
+
+.toc-resize-handle::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -4px;
+  right: -4px;
+  cursor: col-resize;
+}
+
+.toc-resize-handle:hover,
+.toc-resize-handle:active {
+  width: 3px;
+  background: var(--accent);
 }
 </style>

@@ -54,6 +54,16 @@ export const useAppStore = defineStore('app', () => {
   const showSettings = ref(false)
   const immersive = ref(false)
   const showToc = ref(true)
+  const tocWidth = ref<number>(
+    Number(localStorage.getItem('mdnice_toc_width')) || 240
+  )
+
+  function setTocWidth(width: number) {
+    const clamped = Math.max(180, Math.min(500, Math.round(width)))
+    tocWidth.value = clamped
+    localStorage.setItem('mdnice_toc_width', String(clamped))
+  }
+
   const sidebarWidth = ref<number>(
     Number(localStorage.getItem('mdnice_sidebar_width')) || 220
   )
@@ -199,6 +209,8 @@ export const useAppStore = defineStore('app', () => {
     showSettings,
     showToc,
     toggleToc,
+    tocWidth,
+    setTocWidth,
     settings,
     hasFile,
     setContent,
