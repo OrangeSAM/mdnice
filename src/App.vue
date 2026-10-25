@@ -805,7 +805,7 @@ function resetSidebarWidth() {
 
 .welcome-content {
   text-align: center;
-  max-width: 400px;
+  max-width: 520px;
 }
 
 .welcome-logo {
@@ -908,7 +908,8 @@ function resetSidebarWidth() {
 
 .welcome-hints {
   display: flex;
-  gap: 24px;
+  flex-wrap: wrap;
+  gap: 8px 20px;
   justify-content: center;
 }
 
@@ -918,18 +919,19 @@ function resetSidebarWidth() {
   gap: 4px;
   color: var(--text-muted);
   font-size: 11px;
+  white-space: nowrap;
 }
 
 .hint-item kbd {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 20px;
+  min-width: 18px;
   height: 18px;
   background: var(--bg-secondary);
   border: 1px solid var(--border);
   border-radius: 3px;
-  padding: 0 4px;
+  padding: 0 3px;
   font-family: var(--font-mono);
   font-size: 10px;
   color: var(--text-muted);
