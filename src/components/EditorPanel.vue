@@ -14,6 +14,7 @@ import { syntaxHighlighting, defaultHighlightStyle, bracketMatching, indentOnInp
 import { lintKeymap } from '@codemirror/lint'
 import { tags } from '@lezer/highlight'
 import { useAppStore } from '../stores/app'
+import { isDarkThemeValue } from '../composables/useTheme'
 import { debounce } from 'lodash-es'
 
 const store = useAppStore()
@@ -24,13 +25,8 @@ const emit = defineEmits<{
   (e: 'update', content: string): void
 }>()
 
-function getEffectiveTheme(): string {
-  const mode = store.settings.theme || 'light'
-  if (mode === 'system') {
-    return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-  }
-  return mode
-}
+// 深色系主题(深色/极夜/暖夜)用深色语法高亮;界面底色全部走 CSS 变量,自动跟随全部主题
+const isDark = isDarkThemeValue(store.settings.theme)
 
 const darkHighlightStyle = HighlightStyle.define([
   { tag: tags.heading1, color: '#60a5fa', fontWeight: '600' },
@@ -74,7 +70,8 @@ onMounted(() => {
     handleUpdate(update)
   })
 
-  const isDark = getEffectiveTheme() === 'dark'
+  // 编辑器创建时快照一次深色判断即可:语法高亮配色切换需重建 state,主题改版由整体刷新兜底
+  const isDark = isDarkThemeValue(store.settings.theme)
 
   const state = EditorState.create({
     doc: store.fileContent || '',
@@ -102,41 +99,41 @@ onMounted(() => {
         '&': {
           height: '100%',
           fontSize: 'var(--editor-font-size, 14px)',
-          backgroundColor: isDark ? '#0f1117' : '#f8f7f4',
-          color: isDark ? '#e2e4ea' : '#1a1a1a',
+          backgroundColor: 'var(--bg-primary)',
+          color: 'var(--text-primary)',
         },
         '.cm-scroller': {
           fontFamily: 'var(--font-mono)',
-          color: isDark ? '#e2e4ea' : '#1a1a1a',
+          color: 'var(--text-primary)',
         },
         '.cm-content': {
-          caretColor: isDark ? '#60a5fa' : '#2563eb',
-          color: isDark ? '#e2e4ea' : '#1a1a1a',
+          caretColor: 'var(--accent)',
+          color: 'var(--text-primary)',
         },
         '.cm-gutters': {
-          backgroundColor: isDark ? '#0f1117' : '#f8f7f4',
-          color: isDark ? '#5c6078' : '#a3a3a3',
-          borderRightColor: isDark ? '#1e2030' : '#e2e0db',
+          backgroundColor: 'transparent',
+          color: 'var(--text-muted)',
+          borderRight: 'none',
         },
         '.cm-activeLineGutter': {
-          backgroundColor: isDark ? '#161822' : '#f0efeb',
-          color: isDark ? '#9498a8' : '#525252',
+          backgroundColor: 'transparent',
+          color: 'var(--text-secondary)',
         },
         '.cm-activeLine': {
-          backgroundColor: isDark ? 'rgba(96, 165, 250, 0.06)' : 'rgba(37, 99, 235, 0.04)',
+          backgroundColor: 'var(--accent-light)',
         },
         '.cm-selectionBackground': {
-          backgroundColor: isDark ? 'rgba(251, 146, 60, 0.1)' : 'rgba(194, 65, 12, 0.08) !important',
+          backgroundColor: 'var(--accent-soft) !important',
         },
         '.cm-cursor': {
-          borderLeftColor: isDark ? '#60a5fa' : '#2563eb',
+          borderLeftColor: 'var(--accent)',
         },
         '.cm-matchingBracket': {
-          backgroundColor: isDark ? 'rgba(96, 165, 250, 0.15)' : 'rgba(37, 99, 235, 0.12)',
-          outline: isDark ? '1px solid rgba(96, 165, 250, 0.3)' : '1px solid rgba(37, 99, 235, 0.3)',
+          backgroundColor: 'var(--accent-light)',
+          outline: '1px solid var(--accent-soft)',
         },
         '.cm-placeholder': {
-          color: isDark ? '#5c6078' : '#a3a3a3',
+          color: 'var(--text-muted)',
         },
       }),
     ],
