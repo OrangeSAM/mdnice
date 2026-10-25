@@ -9,6 +9,7 @@ interface SessionState {
   last_file_path: string
   last_scroll_top: number
   recent_items: RecentItem[]
+  reading_progress?: Record<string, number>
 }
 
 export function useSession() {
@@ -23,6 +24,7 @@ export function useSession() {
         lastScrollTop: session.last_scroll_top,
       })
       store.setRecentItems(session.recent_items || [])
+      store.setReadingProgressMap(session.reading_progress || {})
     } catch (e) {
       console.error('Failed to load session:', e)
     }
@@ -36,6 +38,7 @@ export function useSession() {
           last_file_path: store.lastFilePath,
           last_scroll_top: store.lastScrollTop,
           recent_items: store.recentItems,
+          reading_progress: store.readingProgress,
         },
       })
     } catch (e) {
@@ -69,6 +72,15 @@ export function useSession() {
     () => {
       debouncedSave()
     }
+  )
+
+  // 阅读进度变化(滚动中 >0.5% 才会变)同样节流持久化
+  watch(
+    () => store.readingProgress,
+    () => {
+      debouncedSave()
+    },
+    { deep: true }
   )
 
   return { loadSession, saveSession }

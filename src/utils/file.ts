@@ -26,3 +26,19 @@ export function findFirstMarkdownFile(entries: FileEntry[]): FileEntry | null {
 
   return null
 }
+
+/** 深度优先把目录树拍平成文件列表(仅 Markdown 文件),供快速打开使用 */
+export function flattenMarkdownFiles(entries: FileEntry[]): FileEntry[] {
+  const out: FileEntry[] = []
+  const walk = (items: FileEntry[]) => {
+    for (const item of items) {
+      if (item.is_dir) {
+        if (item.children) walk(item.children)
+      } else if (/\.(md|markdown|mdown|mkd)$/i.test(item.name)) {
+        out.push(item)
+      }
+    }
+  }
+  walk(entries)
+  return out
+}

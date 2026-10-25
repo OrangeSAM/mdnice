@@ -24,7 +24,7 @@
               class="topbar-btn"
               v-if="store.hasFile || store.fileTree.length"
               @click="store.toggleSidebar()"
-              :title="store.showSidebar ? 'Hide sidebar' : 'Show sidebar'"
+              :title="store.showSidebar ? t('app.hideSidebar') : t('app.showSidebar')"
             >
               <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
                 <rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.2"/>
@@ -35,7 +35,7 @@
               class="topbar-btn"
               v-if="store.hasFile || store.fileTree.length"
               @click="handleHome"
-              title="Home"
+              :title="t('app.home')"
             >
               <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
                 <path d="M2 7L8 2L14 7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -49,7 +49,7 @@
                 class="toggle-btn"
                 :class="{ active: store.settings.view_mode === 'editor' }"
                 @click="store.updateSettings({ view_mode: 'editor' })"
-                title="Editor only"
+                :title="t('app.editorOnly')"
               >
                 <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
                   <rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.2"/>
@@ -60,7 +60,7 @@
                 class="toggle-btn"
                 :class="{ active: store.settings.view_mode === 'split' }"
                 @click="store.updateSettings({ view_mode: 'split' })"
-                title="Split view"
+                :title="t('app.splitView')"
               >
                 <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
                   <rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.2"/>
@@ -71,7 +71,7 @@
                 class="toggle-btn"
                 :class="{ active: store.settings.view_mode === 'preview' }"
                 @click="store.updateSettings({ view_mode: 'preview' })"
-                title="Preview only"
+                :title="t('app.previewOnly')"
               >
                 <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
                   <rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.2"/>
@@ -86,18 +86,24 @@
               :class="{ active: store.showToc }"
               v-if="store.hasFile && store.settings.view_mode !== 'editor'"
               @click="store.toggleToc()"
-              :title="store.showToc ? 'Hide outline (⌘⇧O)' : 'Show outline (⌘⇧O)'"
+              :title="store.showToc ? t('app.hideOutline') : t('app.showOutline')"
             >
               <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
                 <path d="M2.5 3.5H13.5M2.5 8H13.5M2.5 12.5H8.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
               </svg>
             </button>
-            <button class="topbar-btn" @click="handleOpen" title="Open File" v-if="store.hasFile">
+            <button class="topbar-btn" @click="store.showQuickOpen = true" :title="t('app.quickOpen')" v-if="store.hasFile || store.fileTree.length">
+              <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+                <circle cx="7" cy="7" r="4.5" stroke="currentColor" stroke-width="1.2"/>
+                <path d="M10.5 10.5L14 14" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+              </svg>
+            </button>
+            <button class="topbar-btn" @click="handleOpen" :title="t('app.openFile')" v-if="store.hasFile">
               <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
                 <path d="M2 4C2 3.44772 2.44772 3 3 3H6L7.5 5H13C13.5523 5 14 5.44772 14 6V12C14 12.5523 13.5523 13 13 13H3C2.44772 13 2 12.5523 2 12V4Z" stroke="currentColor" stroke-width="1.2"/>
               </svg>
             </button>
-            <button class="topbar-btn" @click="handleSave" title="Save" :disabled="!store.isModified" v-if="store.hasFile">
+            <button class="topbar-btn" @click="handleSave" :title="t('app.save')" :disabled="!store.isModified" v-if="store.hasFile">
               <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
                 <path d="M3 2H10L13 5V13C13 13.5523 12.5523 14 12 14H3C2.44772 14 2 13.5523 2 13V3C2 2.44772 2.44772 2 3 2Z" stroke="currentColor" stroke-width="1.2"/>
                 <path d="M5 2V6H9V2" stroke="currentColor" stroke-width="1.2"/>
@@ -106,7 +112,7 @@
               </svg>
             </button>
             <div class="topbar-divider" v-if="store.hasFile"></div>
-            <button class="topbar-btn" @click="store.showSettings = !store.showSettings" title="Settings">
+            <button class="topbar-btn" @click="store.showSettings = !store.showSettings" :title="t('app.settings')">
               <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
                 <path d="M8 10C9.10457 10 10 9.10457 10 8C10 6.89543 9.10457 6 8 6C6.89543 6 6 6.89543 6 8C6 9.10457 6.89543 10 8 10Z" stroke="currentColor" stroke-width="1.2"/>
                 <path d="M13.5 8C13.5 7.6 13.3 7.2 13 6.9L13.6 5.4L12.1 4.5L10.8 5.5C10.5 5.3 10.1 5.2 9.7 5.1L9.4 3.7H7.4L7.1 5.1C6.7 5.2 6.3 5.3 6 5.5L4.7 4.5L3.2 5.4L3.8 6.9C3.6 7.2 3.5 7.6 3.5 8C3.5 8.4 3.6 8.8 3.8 9.1L3.2 10.6L4.7 11.5L6 10.5C6.3 10.7 6.7 10.8 7.1 10.9L7.4 12.3H9.4L9.7 10.9C10.1 10.8 10.5 10.7 10.8 10.5L12.1 11.5L13.6 10.6L13 9.1C13.3 8.8 13.5 8.4 13.5 8Z" stroke="currentColor" stroke-width="1.2"/>
@@ -117,20 +123,20 @@
 
         <!-- Immersive: 预览占满 -->
         <div class="single-pane" v-if="store.immersive && store.hasFile">
-          <PreviewPanel />
+          <PreviewPanel ref="previewPanelRef" />
         </div>
 
         <!-- Split view -->
         <div class="split-pane" v-else-if="store.hasFile && store.settings.view_mode === 'split'">
           <div class="editor-section" :style="{ width: `${store.settings.editor_width}%` }">
             <div class="panel-header">
-              <span class="panel-label">Markdown</span>
+              <span class="panel-label">{{ t('app.markdown') }}</span>
             </div>
             <EditorPanel @update="handleContentUpdate" />
           </div>
           <div class="resize-handle" @mousedown="startResize"></div>
           <div class="preview-section" :style="{ width: `${100 - store.settings.editor_width}%` }">
-            <PreviewPanel />
+            <PreviewPanel ref="previewPanelRef" />
           </div>
         </div>
 
@@ -141,7 +147,7 @@
 
         <!-- Preview only -->
         <div class="single-pane" v-else-if="store.hasFile && store.settings.view_mode === 'preview'">
-          <PreviewPanel />
+          <PreviewPanel ref="previewPanelRef" />
         </div>
 
         <!-- Home -->
@@ -151,30 +157,30 @@
               <span>M</span>
             </div>
             <h1>Mdnice</h1>
-            <p class="welcome-subtitle">A quiet place to read and write Markdown.</p>
+            <p class="welcome-subtitle">{{ t('app.tagline') }}</p>
             <p class="welcome-folder-hint" v-if="store.fileTree.length && store.lastFolderPath">
-              Current folder: <strong>{{ store.lastFolderPath.split('/').pop() || store.lastFolderPath.split('\\').pop() }}</strong>
+              {{ t('app.currentFolder') }}: <strong>{{ store.lastFolderPath.split('/').pop() || store.lastFolderPath.split('\\').pop() }}</strong>
             </p>
             <div class="welcome-actions">
               <button class="btn-primary" @click="handleOpenFile">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <path d="M2 4C2 3.44772 2.44772 3 3 3H6L7.5 5H13C13.5523 5 14 5.44772 14 6V12C14 12.5523 13.5523 13 13 13H3C2.44772 13 2 12.5523 2 12V4Z" stroke="currentColor" stroke-width="1.2"/>
                 </svg>
-                Open File
+                {{ t('app.openFile') }}
               </button>
               <button class="btn-ghost" @click="handleOpenFolder">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <path d="M2 4C2 3.44772 2.44772 3 3 3H6L7.5 5H13C13.5523 5 14 5.44772 14 6V12C14 12.5523 13.5523 13 13 13H3C2.44772 13 2 12.5523 2 12V4Z" stroke="currentColor" stroke-width="1.2"/>
                   <path d="M2 7H14" stroke="currentColor" stroke-width="1.2"/>
                 </svg>
-                Open Folder
+                {{ t('app.openFolder') }}
               </button>
             </div>
 
             <!-- Recent shelf -->
             <div class="recent" v-if="store.recentItems.length">
               <div class="recent-header">
-                <span class="recent-title">Recent</span>
+                <span class="recent-title">{{ t('app.recent') }}</span>
               </div>
               <div class="recent-list">
                 <div
@@ -192,8 +198,17 @@
                       <path d="M10 2V4H12" stroke="currentColor" stroke-width="1.2"/>
                     </svg>
                   </span>
+                <div class="recent-item-body">
                   <span class="recent-name">{{ item.name }}</span>
-                  <button class="recent-remove" @click.stop="store.removeRecent(item.path)" title="Remove from recent">
+                  <div
+                    class="recent-progress"
+                    v-if="!item.is_dir && (store.readingProgress[item.path] ?? 0) > 0.005"
+                    :title="t('app.readPercent', { percent: Math.round((store.readingProgress[item.path] ?? 0) * 100) })"
+                  >
+                    <i :style="{ width: `${Math.round((store.readingProgress[item.path] ?? 0) * 100)}%` }"></i>
+                  </div>
+                </div>
+                <button class="recent-remove" @click.stop="store.removeRecent(item.path)" :title="t('app.removeRecent')">
                     <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
                       <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
                     </svg>
@@ -205,15 +220,19 @@
             <div class="welcome-hints">
               <div class="hint-item">
                 <kbd>⌘</kbd><kbd>O</kbd>
-                <span>Open</span>
+                <span>{{ t('hint.open') }}</span>
               </div>
               <div class="hint-item">
                 <kbd>⌘</kbd><kbd>S</kbd>
-                <span>Save</span>
+                <span>{{ t('hint.save') }}</span>
+              </div>
+              <div class="hint-item">
+                <kbd>⌘</kbd><kbd>P</kbd>
+                <span>{{ t('hint.quickOpen') }}</span>
               </div>
               <div class="hint-item">
                 <kbd>⌘</kbd><kbd>⇧</kbd><kbd>I</kbd>
-                <span>Immersive</span>
+                <span>{{ t('hint.immersive') }}</span>
               </div>
             </div>
           </div>
@@ -228,16 +247,17 @@
           class="floating-btn"
           :class="{ active: store.showToc }"
           @click="store.toggleToc()"
-          title="Toggle outline (⌘⇧O)"
+          :title="store.showToc ? t('app.immersiveOutlineActive') : t('app.immersiveOutline')"
         >
           <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
             <path d="M2.5 3.5H13.5M2.5 8H13.5M2.5 12.5H8.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
           </svg>
         </button>
-        <button class="floating-exit" @click="store.toggleImmersive" title="Exit (Esc)">Exit</button>
+        <button class="floating-exit" @click="store.toggleImmersive" :title="'Esc'">{{ t('app.immersiveExit') }}</button>
       </div>
     </div>
     <SettingsPanel />
+    <QuickOpen />
   </div>
 </template>
 
@@ -251,15 +271,25 @@ import Sidebar from './components/Sidebar.vue'
 import EditorPanel from './components/EditorPanel.vue'
 import PreviewPanel from './components/PreviewPanel.vue'
 import SettingsPanel from './components/SettingsPanel.vue'
-import { open } from '@tauri-apps/plugin-dialog'
+import QuickOpen from './components/QuickOpen.vue'
+import { open, ask } from '@tauri-apps/plugin-dialog'
 import { invoke } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
+import { homeDir } from '@tauri-apps/api/path'
+import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow'
+import { setHomeDir } from './markdown-it-local-images'
+import { setupAutoSave, flushSave } from './composables/useAutoSave'
+import { guardUnsavedChanges } from './composables/useUnsavedGuard'
+import { setupExternalReload } from './composables/useExternalReload'
+import { t, setLocale, resolveLocale } from './i18n'
 import { findFirstMarkdownFile } from './utils/file'
 
 const store = useAppStore()
 const { themeMode } = useTheme()
 const { loadSettings } = useSettings()
 const { loadSession } = useSession()
+
+const previewPanelRef = ref<InstanceType<typeof PreviewPanel> | null>(null)
 
 const currentTheme = computed(() => {
   if (themeMode.value === 'system') {
@@ -279,6 +309,34 @@ onMounted(async () => {
   await loadSettings()
   await loadSession()
 
+  // 界面语言:跟随设置(system 则检测系统语言)
+  setLocale(resolveLocale(store.settings.language || 'system'))
+
+  // 图片路径 ~ 前缀展开用;失败不影响主流程
+  homeDir().then(setHomeDir).catch(() => {})
+
+  setupAutoSave()
+  setupExternalReload()
+
+  // 关窗前的未保存保护:自动保存开着就冲刷;否则询问保存还是放弃
+  getCurrentWebviewWindow().onCloseRequested(async (event) => {
+    const modified = store.hasFile && store.isModified
+    if (!modified) return
+    if (store.settings.auto_save) {
+      await flushSave()
+      return
+    }
+    event.preventDefault()
+    const save = await ask(t('close.message'), {
+      title: t('guard.title'),
+      kind: 'warning',
+      okLabel: t('close.saveAndExit'),
+      cancelLabel: t('guard.discard'),
+    })
+    if (save) await flushSave()
+    await getCurrentWebviewWindow().destroy()
+  })
+
   // 启动时消费一次; 之后 app 运行中右键打开文件会触发 open-file 事件
   await openPendingFiles()
   await listen('open-file', () => {
@@ -289,6 +347,22 @@ onMounted(async () => {
     if ((e.metaKey || e.ctrlKey) && e.key === 'o') {
       e.preventDefault()
       handleOpenFile()
+    }
+    // ⌘P:快速打开 / 全文搜索
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'p' && !e.shiftKey) {
+      e.preventDefault()
+      if (store.hasFile || store.fileTree.length) {
+        store.showQuickOpen = true
+      }
+    }
+    // ⌘F:预览内查找;编辑器聚焦时交给 CodeMirror 自带搜索
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'f' && !e.shiftKey) {
+      const target = e.target as HTMLElement | null
+      if (target?.closest?.('.cm-editor')) return
+      if (store.hasFile && store.settings.view_mode !== 'editor') {
+        e.preventDefault()
+        previewPanelRef.value?.openFind()
+      }
     }
     if ((e.metaKey || e.ctrlKey) && e.key === 's') {
       e.preventDefault()
@@ -302,9 +376,22 @@ onMounted(async () => {
       e.preventDefault()
       store.toggleToc()
     }
-    if (e.key === 'Escape' && store.immersive) {
-      e.preventDefault()
-      store.toggleImmersive()
+    if (e.key === 'Escape') {
+      // Esc 关闭层级:设置 → 快速打开 → 沉浸模式(快速打开输入框内的 Esc 已自处理)
+      if (store.showSettings) {
+        e.preventDefault()
+        store.showSettings = false
+        return
+      }
+      if (store.showQuickOpen) {
+        e.preventDefault()
+        store.showQuickOpen = false
+        return
+      }
+      if (store.immersive) {
+        e.preventDefault()
+        store.toggleImmersive()
+      }
     }
   })
 })
@@ -314,6 +401,7 @@ function handleContentUpdate(content: string) {
 }
 
 async function handleOpenFile() {
+  if (!(await guardUnsavedChanges('guard.action.openFile'))) return
   try {
     const selected = await open({
       multiple: false,
@@ -334,6 +422,7 @@ async function handleOpenFile() {
 }
 
 async function handleOpenFolder() {
+  if (!(await guardUnsavedChanges('guard.action.openFolder'))) return
   try {
     const selected = await open({ directory: true, multiple: false })
     if (selected) {
@@ -359,6 +448,8 @@ async function handleOpen() {
 
 // 点击书架项打开;文件/目录失效则静默从书架移除
 async function openRecentItem(item: { name: string; path: string; is_dir: boolean }) {
+  if (item.path === store.currentFilePath) return
+  if (!(await guardUnsavedChanges('guard.action.openFile'))) return
   try {
     if (item.is_dir) {
       const entries = await invoke<any[]>('read_folder', { path: item.path })
@@ -372,9 +463,11 @@ async function openRecentItem(item: { name: string; path: string; is_dir: boolea
       }
     } else {
       const content = await invoke<string>('read_file', { path: item.path })
-      // 若是上次读的文件,恢复阅读位置
+      // 恢复阅读位置:上次读的文件用绝对滚动位置,其他文件按阅读进度比例恢复
       if (item.path === store.lastFilePath) {
         store.pendingScrollRestore = store.lastScrollTop
+      } else if ((store.readingProgress[item.path] ?? 0) > 0.005) {
+        store.pendingProgressRestore = store.readingProgress[item.path]
       }
       store.openFile(item.path, item.name, content)
     }
@@ -389,6 +482,8 @@ async function openPendingFiles() {
   try {
     const paths = await invoke<string[]>('take_pending_open_files')
     for (const path of paths) {
+      if (path === store.currentFilePath) continue
+      if (!(await guardUnsavedChanges('guard.action.openFile'))) continue
       const content = await invoke<string>('read_file', { path })
       const name = path.split('/').pop() || path.split('\\').pop() || path
       store.openFile(path, name, content)
@@ -399,21 +494,13 @@ async function openPendingFiles() {
 }
 
 // 返回首页:清空当前文件/目录,保留书架
-function handleHome() {
+async function handleHome() {
+  if (!(await guardUnsavedChanges('guard.action.home'))) return
   store.closeFolder()
 }
 
 async function handleSave() {
-  if (!store.currentFilePath || !store.isModified) return
-  try {
-    await invoke('write_file', {
-      path: store.currentFilePath,
-      content: store.fileContent,
-    })
-    store.isModified = false
-  } catch (e) {
-    console.error('Save failed:', e)
-  }
+  await flushSave()
 }
 
 function startResize(e: MouseEvent) {
@@ -473,12 +560,14 @@ function resetSidebarWidth() {
   flex-direction: column;
   overflow: hidden;
   background: var(--bg-primary);
+  transition: background-color 0.2s ease;
 }
 
 .titlebar {
   height: 28px;
   flex-shrink: 0;
   background: var(--bg-primary);
+  transition: background-color 0.2s ease;
 }
 
 .app-body {
@@ -496,7 +585,7 @@ function resetSidebarWidth() {
 
 /* Top bar */
 .app-topbar {
-  height: 36px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -506,6 +595,7 @@ function resetSidebarWidth() {
   flex-shrink: 0;
   user-select: none;
   -webkit-user-select: none;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .topbar-left {
@@ -527,6 +617,7 @@ function resetSidebarWidth() {
   font-size: 12px;
   font-weight: 500;
   color: var(--text-secondary);
+  letter-spacing: 0.01em;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -535,21 +626,21 @@ function resetSidebarWidth() {
 .topbar-actions {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 3px;
 }
 
 .topbar-btn {
-  width: 28px;
-  height: 26px;
+  width: 30px;
+  height: 28px;
   border: none;
   background: transparent;
   color: var(--text-muted);
   cursor: pointer;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.1s ease;
+  transition: background-color 0.12s ease, color 0.12s ease;
 }
 
 .topbar-btn:hover {
@@ -583,23 +674,23 @@ function resetSidebarWidth() {
 .view-toggle {
   display: flex;
   background: var(--bg-tertiary);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   padding: 2px;
-  gap: 1px;
+  gap: 2px;
 }
 
 .toggle-btn {
-  width: 26px;
-  height: 22px;
+  width: 28px;
+  height: 24px;
   border: none;
   background: transparent;
   color: var(--text-muted);
   cursor: pointer;
-  border-radius: 3px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.1s ease;
+  transition: background-color 0.12s ease, color 0.12s ease;
 }
 
 .toggle-btn.active {
@@ -714,39 +805,46 @@ function resetSidebarWidth() {
 
 .welcome-content {
   text-align: center;
-  max-width: 360px;
+  max-width: 400px;
 }
 
 .welcome-logo {
-  width: 52px;
-  height: 52px;
-  background: var(--accent);
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
   color: white;
-  border-radius: var(--radius-lg);
+  border-radius: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
+  font-size: 28px;
   font-weight: 700;
-  margin: 0 auto 24px;
+  margin: 0 auto 28px;
   font-family: var(--font-serif);
   letter-spacing: -0.02em;
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  transition: transform 0.3s var(--ease-out), box-shadow 0.3s var(--ease-out);
+}
+
+.welcome-logo:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: var(--shadow-lg), inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 
 .welcome h1 {
   margin: 0 0 8px;
-  font-size: 22px;
+  font-size: 26px;
   font-weight: 600;
   color: var(--text-primary);
-  letter-spacing: -0.02em;
+  font-family: var(--font-serif);
+  letter-spacing: -0.03em;
 }
 
 .welcome-subtitle {
   margin: 0 0 20px;
   color: var(--text-muted);
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 .welcome-folder-hint {
@@ -763,47 +861,49 @@ function resetSidebarWidth() {
   display: flex;
   gap: 10px;
   justify-content: center;
-  margin-bottom: 32px;
+  margin-bottom: 36px;
 }
 
 .btn-primary {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  padding: 9px 18px;
+  padding: 10px 20px;
   border: none;
   background: var(--accent);
   color: white;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.12s ease;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s var(--ease-out);
 }
 
 .btn-primary:hover {
   background: var(--accent-hover);
   box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
 }
 
 .btn-ghost {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  padding: 9px 18px;
+  padding: 10px 20px;
   border: 1px solid var(--border);
   background: var(--bg-primary);
   color: var(--text-secondary);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.12s ease;
+  transition: border-color 0.15s ease, color 0.15s ease, transform 0.15s var(--ease-out);
 }
 
 .btn-ghost:hover {
-  border-color: var(--text-muted);
+  border-color: var(--border-strong);
   color: var(--text-primary);
+  transform: translateY(-1px);
 }
 
 .welcome-hints {
@@ -879,11 +979,11 @@ function resetSidebarWidth() {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 7px 10px;
-  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
   cursor: pointer;
   color: var(--text-secondary);
-  transition: background 0.1s ease;
+  transition: background-color 0.1s ease;
 }
 
 .recent-item:hover {
@@ -900,13 +1000,35 @@ function resetSidebarWidth() {
   color: var(--text-muted);
 }
 
-.recent-name {
+.recent-item-body {
   flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.recent-name {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 13px;
+}
+
+.recent-progress {
+  height: 2px;
+  border-radius: 1px;
+  background: var(--border);
+  overflow: hidden;
+  margin-right: 24px;
+}
+
+.recent-progress i {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  border-radius: 1px;
 }
 
 .recent-remove {
@@ -946,10 +1068,12 @@ function resetSidebarWidth() {
   align-items: center;
   justify-content: space-between;
   padding: 0 12px 0 80px;
-  background: var(--bg-secondary);
+  background: color-mix(in srgb, var(--bg-secondary) 88%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
   transform: translateY(-100%);
-  transition: transform 0.2s ease;
+  transition: transform 0.25s var(--ease-out);
   z-index: 50;
   user-select: none;
   -webkit-user-select: none;

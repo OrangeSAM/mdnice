@@ -24,9 +24,12 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             commands::file::read_file,
             commands::file::write_file,
+            commands::file::file_mtime,
             commands::file::open_file_dialog,
             commands::file::open_folder_dialog,
             commands::file::read_folder,
+            commands::file::search_folder,
+            commands::file::print_window,
             commands::file::take_pending_open_files,
             commands::settings::load_settings,
             commands::settings::save_settings,

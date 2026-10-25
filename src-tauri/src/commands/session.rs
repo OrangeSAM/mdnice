@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
 
@@ -21,6 +22,9 @@ pub struct SessionState {
     /// #[serde(default)] 保证旧 session.json 缺字段时仍能反序列化。
     #[serde(default)]
     pub recent_items: Vec<RecentItem>,
+    /// 每个文件的阅读进度(path → 0.0~1.0),书架进度条与继续阅读用。
+    #[serde(default)]
+    pub reading_progress: HashMap<String, f64>,
 }
 
 fn session_path() -> Result<PathBuf, String> {
