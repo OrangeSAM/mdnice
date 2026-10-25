@@ -7,17 +7,26 @@
 
 .cm-editor .cm-scroller {
   font-family: var(--font-mono);
-  line-height: 1.65;
-  padding: 8px 0;
+  line-height: 1.7;
+  padding: 12px 0;
 }
 
 .cm-editor .cm-content {
-  padding: 0 20px;
+  padding: 0 24px;
 }
 
 .cm-editor .cm-gutters {
   font-size: 0.82em;
-  min-width: 40px;
+  min-width: 44px;
+  background: transparent;
+  border-right: none;
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+.cm-editor .cm-activeLineGutter {
+  background: transparent;
+  opacity: 1;
 }
 
 .cm-editor.cm-focused {
