@@ -6,6 +6,14 @@ fn default_sidebar_width() -> f64 {
     220.0
 }
 
+fn default_auto_save() -> bool {
+    true
+}
+
+fn default_language() -> String {
+    "system".into()
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AppSettings {
     pub font_size: u32,
@@ -19,6 +27,10 @@ pub struct AppSettings {
     #[serde(default = "default_sidebar_width")]
     pub sidebar_width: f64,
     pub view_mode: String,
+    #[serde(default = "default_auto_save")]
+    pub auto_save: bool,
+    #[serde(default = "default_language")]
+    pub language: String,
 }
 
 impl Default for AppSettings {
@@ -34,6 +46,8 @@ impl Default for AppSettings {
             show_sidebar: true,
             sidebar_width: 220.0,
             view_mode: "split".into(),
+            auto_save: true,
+            language: "system".into(),
         }
     }
 }

@@ -5,10 +5,10 @@
         <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
           <path d="M2.5 3.5H13.5M2.5 8H13.5M2.5 12.5H8.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
         </svg>
-        <span>Outline</span>
+        <span>{{ t('toc.outline') }}</span>
       </div>
       <div class="toc-actions">
-        <button class="toc-action" @click="store.toggleToc()" title="Hide outline (⌘⇧O)">
+        <button class="toc-action" @click="store.toggleToc()" :title="t('toc.hide')">
           <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
             <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
           </svg>
@@ -21,7 +21,7 @@
         <svg width="24" height="24" viewBox="0 0 16 16" fill="none" class="empty-icon">
           <path d="M2.5 3.5H13.5M2.5 8H13.5M2.5 12.5H8.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
         </svg>
-        <span>No headings</span>
+        <span>{{ t('toc.noHeadings') }}</span>
       </div>
       <nav v-else class="toc-list">
         <button
@@ -44,6 +44,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useAppStore } from '../stores/app'
+import { t } from '../i18n'
 import type { HeadingItem } from '../markdown-it-heading-anchor'
 
 const props = defineProps<{

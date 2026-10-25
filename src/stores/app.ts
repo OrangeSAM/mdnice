@@ -17,6 +17,9 @@ export interface RecentItem {
 
 export type ViewMode = 'editor' | 'preview' | 'split'
 
+/** 语言设置:system 跟随系统,zh / en 固定 */
+export type LanguageSetting = 'system' | 'zh' | 'en'
+
 export interface AppSettings {
   font_size: number
   font_family: string
@@ -28,6 +31,8 @@ export interface AppSettings {
   show_sidebar: boolean
   sidebar_width?: number
   view_mode: ViewMode
+  auto_save: boolean
+  language: LanguageSetting
 }
 
 export const useAppStore = defineStore('app', () => {
@@ -44,6 +49,10 @@ export const useAppStore = defineStore('app', () => {
   const lastScrollTop = ref<number>(0)
   // 启动恢复时由 App.vue 设置,PreviewPanel render 完成后读取并清空(一次性)
   const pendingScrollRestore = ref<number | null>(null)
+  // 同上,但按进度比例(0~1)恢复:书架里点开任意有进度的文件时使用
+  const pendingProgressRestore = ref<number | null>(null)
+  // 每个文件的阅读进度(path → 0.0~1.0),书架进度条展示 + 恢复继续阅读
+  const readingProgress = ref<Record<string, number>>({})
 
   // 最近书架(最近优先,去重,上限 MAX_RECENT)
   const recentItems = ref<RecentItem[]>([])
@@ -52,6 +61,7 @@ export const useAppStore = defineStore('app', () => {
   // UI state
   const showSidebar = ref(true)
   const showSettings = ref(false)
+  const showQuickOpen = ref(false)
   const immersive = ref(false)
   const showToc = ref(true)
   const tocWidth = ref<number>(
@@ -87,6 +97,8 @@ export const useAppStore = defineStore('app', () => {
     show_sidebar: true,
     sidebar_width: 220,
     view_mode: 'split',
+    auto_save: true,
+    language: 'system',
   })
 
   const hasFile = computed(() => currentFilePath.value !== '')
@@ -135,6 +147,19 @@ export const useAppStore = defineStore('app', () => {
     if (partial.lastFolderPath !== undefined) lastFolderPath.value = partial.lastFolderPath
     if (partial.lastFilePath !== undefined) lastFilePath.value = partial.lastFilePath
     if (partial.lastScrollTop !== undefined) lastScrollTop.value = partial.lastScrollTop
+  }
+
+  function setReadingProgress(path: string, progress: number) {
+    if (!path) return
+    const clamped = Math.max(0, Math.min(1, progress))
+    const current = readingProgress.value[path] ?? -1
+    // 滚动高频触发,变化小于 0.5% 不更新,避免无意义的响应式风暴
+    if (Math.abs(current - clamped) < 0.005) return
+    readingProgress.value = { ...readingProgress.value, [path]: clamped }
+  }
+
+  function setReadingProgressMap(map: Record<string, number>) {
+    readingProgress.value = map || {}
   }
 
   // 容错回退:清掉失效的 session 字段(传入 true 表示清除该项)
@@ -196,6 +221,10 @@ export const useAppStore = defineStore('app', () => {
     lastFilePath,
     lastScrollTop,
     pendingScrollRestore,
+    pendingProgressRestore,
+    readingProgress,
+    setReadingProgress,
+    setReadingProgressMap,
     recentItems,
     pushRecent,
     removeRecent,
@@ -207,6 +236,7 @@ export const useAppStore = defineStore('app', () => {
     sidebarWidth,
     setSidebarWidth,
     showSettings,
+    showQuickOpen,
     showToc,
     toggleToc,
     tocWidth,

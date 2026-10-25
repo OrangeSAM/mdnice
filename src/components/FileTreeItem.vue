@@ -37,6 +37,7 @@
 import { ref, computed } from 'vue'
 import { useAppStore } from '../stores/app'
 import { invoke } from '@tauri-apps/api/core'
+import { guardUnsavedChanges } from '../composables/useUnsavedGuard'
 
 interface FileEntry {
   name: string
@@ -62,6 +63,9 @@ async function handleClick() {
   }
 
   if (!props.item.name.match(/\.(md|markdown|mdown|mkd)$/i)) return
+  if (props.item.path === store.currentFilePath) return
+
+  if (!(await guardUnsavedChanges('guard.action.openFile'))) return
 
   try {
     const content = await invoke<string>('read_file', { path: props.item.path })
@@ -77,15 +81,15 @@ async function handleClick() {
   display: flex;
   align-items: center;
   gap: 5px;
-  padding: 3px 10px;
+  padding: 4px 10px;
   cursor: pointer;
   font-size: 12px;
   color: var(--text-secondary);
-  transition: all 0.08s ease;
+  transition: background-color 0.08s ease, color 0.08s ease;
   white-space: nowrap;
   overflow: hidden;
-  border-radius: var(--radius-sm);
-  margin: 0 4px;
+  border-radius: var(--radius-md);
+  margin: 0 6px;
 }
 
 .tree-item:hover {
