@@ -6,21 +6,35 @@ import { debounce } from 'lodash-es'
 // 阅读器场景下编辑是顺手改两笔,自动保存天经地义:停止输入 800ms 后写盘。
 // 关闭自动保存时仍提供手动 ⌘S 保存。
 
-/** 立即保存当前文件(有修改时)。供守卫、退出前冲刷复用 */
-export async function flushSave(): Promise<boolean> {
+/** 立即保存指定标签页或当前文件(有修改时)。供守卫、退出前冲刷复用 */
+export async function flushSave(tabId?: string): Promise<boolean> {
   const store = useAppStore()
-  if (!store.hasFile || !store.isModified) return true
+  const tab = tabId ? store.tabs.find((t) => t.id === tabId) : store.activeTab
+  if (!tab || !tab.path || !tab.isModified) return true
   try {
     await invoke('write_file', {
-      path: store.currentFilePath,
-      content: store.fileContent,
+      path: tab.path,
+      content: tab.content,
     })
-    store.isModified = false
+    tab.isModified = false
     return true
   } catch (e) {
     console.error('Save failed:', e)
     return false
   }
+}
+
+/** 冲刷保存所有有未保存更改的标签页 */
+export async function flushAllSave(): Promise<boolean> {
+  const store = useAppStore()
+  let allSuccess = true
+  for (const tab of store.tabs) {
+    if (tab.isModified) {
+      const ok = await flushSave(tab.id)
+      if (!ok) allSuccess = false
+    }
+  }
+  return allSuccess
 }
 
 // 调度时记录目标路径:若用户在防抖窗口内切走了文件,过期保存不落盘

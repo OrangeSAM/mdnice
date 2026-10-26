@@ -1,6 +1,6 @@
 import { ask } from '@tauri-apps/plugin-dialog'
 import { useAppStore } from '../stores/app'
-import { flushSave } from './useAutoSave'
+import { flushSave, flushAllSave } from './useAutoSave'
 import { t } from '../i18n'
 
 /**
@@ -11,13 +11,36 @@ import { t } from '../i18n'
  */
 export async function guardUnsavedChanges(actionKey: string): Promise<boolean> {
   const store = useAppStore()
-  if (!store.hasFile || !store.isModified) return true
+  const hasAnyModified = store.tabs.some((t) => t.isModified)
+  if (!hasAnyModified) return true
 
   if (store.settings.auto_save) {
-    return flushSave()
+    return flushAllSave()
   }
 
   return ask(t('guard.message', { action: t(actionKey) }), {
+    title: t('guard.title'),
+    kind: 'warning',
+    okLabel: t('guard.discard'),
+    cancelLabel: t('guard.cancel'),
+  })
+}
+
+/**
+ * 关闭单个标签页时的未保存保护:
+ * - 自动保存开启时冲刷该标签并允许关闭;
+ * - 关闭自动保存时提示确认。
+ */
+export async function guardCloseTab(tabId: string): Promise<boolean> {
+  const store = useAppStore()
+  const tab = store.tabs.find((t) => t.id === tabId)
+  if (!tab || !tab.isModified) return true
+
+  if (store.settings.auto_save) {
+    return flushSave(tabId)
+  }
+
+  return ask(t('guard.message', { action: t('guard.action.closeTab', { name: tab.name }) }), {
     title: t('guard.title'),
     kind: 'warning',
     okLabel: t('guard.discard'),

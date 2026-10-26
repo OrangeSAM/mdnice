@@ -387,7 +387,9 @@ function handlePreviewClick(e: MouseEvent) {
 let scrollTicking = false
 function handleScroll() {
   if (previewContent.value) {
-    store.lastScrollTop = previewContent.value.scrollTop
+    const st = previewContent.value.scrollTop
+    store.lastScrollTop = st
+    store.updateActiveTabScroll(st, readingProgress.value)
   }
 
   if (!scrollTicking) {

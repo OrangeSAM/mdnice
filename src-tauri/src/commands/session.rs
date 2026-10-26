@@ -25,6 +25,9 @@ pub struct SessionState {
     /// 每个文件的阅读进度(path → 0.0~1.0),书架进度条与继续阅读用。
     #[serde(default)]
     pub reading_progress: HashMap<String, f64>,
+    /// 当前打开的所有标签页路径列表
+    #[serde(default)]
+    pub open_tabs: Vec<String>,
 }
 
 fn session_path() -> Result<PathBuf, String> {

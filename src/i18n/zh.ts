@@ -58,6 +58,15 @@ export const zh: Record<string, string> = {
   'qo.close': '关闭',
   'qo.title': '快速打开 (⌘P)',
 
+  // 标签页
+  'tab.close': '关闭标签 (⌘W)',
+  'tab.closeOthers': '关闭其他标签',
+  'tab.closeRight': '关闭右侧标签',
+  'tab.closeAll': '关闭全部标签',
+  'tab.newFile': '打开文件',
+  'tab.copyPath': '复制文件路径',
+  'tab.copied': '已复制路径',
+
   // 未保存守卫
   'guard.title': 'Mdnice',
   'guard.message': '当前文档有未保存的更改，{action}将丢失这些更改。',
@@ -67,6 +76,7 @@ export const zh: Record<string, string> = {
   'guard.action.openFolder': '打开新目录',
   'guard.action.home': '返回主页',
   'guard.action.closeFolder': '关闭目录',
+  'guard.action.closeTab': '关闭「{name}」',
   'close.message': '当前文档有未保存的更改。',
   'close.saveAndExit': '保存并退出',
 

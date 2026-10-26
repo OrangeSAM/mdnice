@@ -49,6 +49,7 @@ import { invoke } from '@tauri-apps/api/core'
 import { guardUnsavedChanges } from '../composables/useUnsavedGuard'
 import { t } from '../i18n'
 import { findFirstMarkdownFile } from '../utils/file'
+import { openMarkdownFile } from '../utils/openFile'
 import FileTreeItem from './FileTreeItem.vue'
 
 const store = useAppStore()
@@ -70,8 +71,7 @@ async function handleOpenFolder() {
       if (!store.hasFile) {
         const firstFile = findFirstMarkdownFile(entries)
         if (firstFile) {
-          const content = await invoke<string>('read_file', { path: firstFile.path })
-          store.openFile(firstFile.path, firstFile.name, content)
+          await openMarkdownFile(firstFile.path, firstFile.name)
         }
       }
     }

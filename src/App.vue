@@ -121,6 +121,9 @@
           </div>
         </div>
 
+        <!-- 标签页栏 -->
+        <TabBar v-if="!store.immersive && store.hasFile" @open-file="handleOpenFile" />
+
         <!-- Immersive: 预览占满 -->
         <div class="single-pane" v-if="store.immersive && store.hasFile">
           <PreviewPanel ref="previewPanelRef" />
@@ -268,6 +271,7 @@ import { useTheme } from './composables/useTheme'
 import { useSettings } from './composables/useSettings'
 import { useSession } from './composables/useSession'
 import Sidebar from './components/Sidebar.vue'
+import TabBar from './components/TabBar.vue'
 import EditorPanel from './components/EditorPanel.vue'
 import PreviewPanel from './components/PreviewPanel.vue'
 import SettingsPanel from './components/SettingsPanel.vue'
@@ -279,10 +283,11 @@ import { homeDir } from '@tauri-apps/api/path'
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow'
 import { setHomeDir } from './markdown-it-local-images'
 import { setupAutoSave, flushSave } from './composables/useAutoSave'
-import { guardUnsavedChanges } from './composables/useUnsavedGuard'
+import { guardUnsavedChanges, guardCloseTab } from './composables/useUnsavedGuard'
 import { setupExternalReload } from './composables/useExternalReload'
 import { t, setLocale, resolveLocale } from './i18n'
 import { findFirstMarkdownFile } from './utils/file'
+import { openMarkdownFile } from './utils/openFile'
 
 const store = useAppStore()
 const { themeMode } = useTheme()
@@ -344,9 +349,52 @@ onMounted(async () => {
   })
 
   document.addEventListener('keydown', (e) => {
-    if ((e.metaKey || e.ctrlKey) && e.key === 'o') {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'o' && !e.shiftKey) {
       e.preventDefault()
       handleOpenFile()
+    }
+    // ⌘W: 关闭当前标签页
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'w' && !e.shiftKey) {
+      if (store.hasFile && store.activeTabId) {
+        e.preventDefault()
+        void (async () => {
+          const allowed = await guardCloseTab(store.activeTabId)
+          if (allowed) {
+            store.closeTab(store.activeTabId)
+          }
+        })()
+      }
+    }
+    // ⌘⇧[ / ⌘⇧] 或 Ctrl+Tab / Ctrl+Shift+Tab: 切换标签页
+    if ((e.metaKey || e.ctrlKey) && (e.key === '{' || e.key === '[')) {
+      if (e.shiftKey && store.tabs.length > 1) {
+        e.preventDefault()
+        store.prevTab()
+      }
+    }
+    if ((e.metaKey || e.ctrlKey) && (e.key === '}' || e.key === ']')) {
+      if (e.shiftKey && store.tabs.length > 1) {
+        e.preventDefault()
+        store.nextTab()
+      }
+    }
+    if (e.ctrlKey && e.key === 'Tab') {
+      if (store.tabs.length > 1) {
+        e.preventDefault()
+        if (e.shiftKey) {
+          store.prevTab()
+        } else {
+          store.nextTab()
+        }
+      }
+    }
+    // ⌘1 ~ ⌘9: 快速切换到对应标签
+    if ((e.metaKey || e.ctrlKey) && /^[1-9]$/.test(e.key) && !e.shiftKey) {
+      const index = parseInt(e.key, 10) - 1
+      if (index < store.tabs.length) {
+        e.preventDefault()
+        store.switchTab(store.tabs[index].id)
+      }
     }
     // ⌘P:快速打开 / 全文搜索
     if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'p' && !e.shiftKey) {
@@ -401,20 +449,19 @@ function handleContentUpdate(content: string) {
 }
 
 async function handleOpenFile() {
-  if (!(await guardUnsavedChanges('guard.action.openFile'))) return
   try {
     const selected = await open({
-      multiple: false,
+      multiple: true,
       filters: [
         { name: 'Markdown', extensions: ['md', 'markdown', 'mdown', 'mkd'] },
         { name: 'All', extensions: ['*'] },
       ],
     })
-    if (selected) {
-      const path = selected as string
-      const content = await invoke<string>('read_file', { path })
-      const name = path.split('/').pop() || path
-      store.openFile(path, name, content)
+    if (!selected) return
+    const paths = Array.isArray(selected) ? selected : [selected]
+    for (const path of paths) {
+      const name = path.split('/').pop() || path.split('\\').pop() || path
+      await openMarkdownFile(path, name)
     }
   } catch (e) {
     console.error('Open file failed:', e)
@@ -432,8 +479,7 @@ async function handleOpenFolder() {
       if (!store.hasFile) {
         const firstFile = findFirstMarkdownFile(entries)
         if (firstFile) {
-          const content = await invoke<string>('read_file', { path: firstFile.path })
-          store.openFile(firstFile.path, firstFile.name, content)
+          await openMarkdownFile(firstFile.path, firstFile.name)
         }
       }
     }
@@ -448,8 +494,6 @@ async function handleOpen() {
 
 // 点击书架项打开;文件/目录失效则静默从书架移除
 async function openRecentItem(item: { name: string; path: string; is_dir: boolean }) {
-  if (item.path === store.currentFilePath) return
-  if (!(await guardUnsavedChanges('guard.action.openFile'))) return
   try {
     if (item.is_dir) {
       const entries = await invoke<any[]>('read_folder', { path: item.path })
@@ -457,19 +501,11 @@ async function openRecentItem(item: { name: string; path: string; is_dir: boolea
       if (!store.hasFile) {
         const firstFile = findFirstMarkdownFile(entries)
         if (firstFile) {
-          const content = await invoke<string>('read_file', { path: firstFile.path })
-          store.openFile(firstFile.path, firstFile.name, content)
+          await openMarkdownFile(firstFile.path, firstFile.name)
         }
       }
     } else {
-      const content = await invoke<string>('read_file', { path: item.path })
-      // 恢复阅读位置:上次读的文件用绝对滚动位置,其他文件按阅读进度比例恢复
-      if (item.path === store.lastFilePath) {
-        store.pendingScrollRestore = store.lastScrollTop
-      } else if ((store.readingProgress[item.path] ?? 0) > 0.005) {
-        store.pendingProgressRestore = store.readingProgress[item.path]
-      }
-      store.openFile(item.path, item.name, content)
+      await openMarkdownFile(item.path, item.name)
     }
   } catch (e) {
     console.error('Open recent item failed:', e)
@@ -477,16 +513,13 @@ async function openRecentItem(item: { name: string; path: string; is_dir: boolea
   }
 }
 
-// 文件关联 / 命令行参数打开: 从 Rust 拉取待打开路径并加载
+// 文件关联 / 命令行参数打开: 从 Rust 拉取待打开路径并加载，支持多文件同时打开
 async function openPendingFiles() {
   try {
     const paths = await invoke<string[]>('take_pending_open_files')
     for (const path of paths) {
-      if (path === store.currentFilePath) continue
-      if (!(await guardUnsavedChanges('guard.action.openFile'))) continue
-      const content = await invoke<string>('read_file', { path })
       const name = path.split('/').pop() || path.split('\\').pop() || path
-      store.openFile(path, name, content)
+      await openMarkdownFile(path, name)
     }
   } catch (e) {
     console.error('Open pending files failed:', e)

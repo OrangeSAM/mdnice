@@ -15,6 +15,17 @@ export interface RecentItem {
   is_dir: boolean
 }
 
+/** 打开的文件标签页 */
+export interface TabItem {
+  id: string
+  path: string
+  name: string
+  content: string
+  isModified: boolean
+  scrollTop: number
+  readingProgress: number
+}
+
 export type ViewMode = 'editor' | 'preview' | 'split'
 
 /** 语言设置:system 跟随系统,zh / en 固定 */
@@ -36,12 +47,38 @@ export interface AppSettings {
 }
 
 export const useAppStore = defineStore('app', () => {
-  // File state
-  const currentFilePath = ref<string>('')
-  const currentFileName = ref<string>('')
-  const fileContent = ref<string>('')
-  const isModified = ref(false)
+  // Tabs & File state
+  const tabs = ref<TabItem[]>([])
+  const activeTabId = ref<string>('')
   const fileTree = ref<FileEntry[]>([])
+
+  const activeTab = computed(() => {
+    return tabs.value.find((t) => t.id === activeTabId.value) || null
+  })
+
+  const currentFilePath = computed(() => activeTab.value?.path || '')
+  const currentFileName = computed(() => activeTab.value?.name || '')
+
+  const fileContent = computed({
+    get: () => activeTab.value?.content || '',
+    set: (val: string) => {
+      if (activeTab.value) {
+        activeTab.value.content = val
+        activeTab.value.isModified = true
+      }
+    },
+  })
+
+  const isModified = computed({
+    get: () => activeTab.value?.isModified || false,
+    set: (val: boolean) => {
+      if (activeTab.value) {
+        activeTab.value.isModified = val
+      }
+    },
+  })
+
+  const hasFile = computed(() => tabs.value.length > 0 && activeTab.value !== null)
 
   // Session state (持久化到 session.json,启动时恢复上次目录/文件/阅读位置)
   const lastFolderPath = ref<string>('')
@@ -101,20 +138,170 @@ export const useAppStore = defineStore('app', () => {
     language: 'system',
   })
 
-  const hasFile = computed(() => currentFilePath.value !== '')
-
   function setContent(content: string) {
-    fileContent.value = content
-    isModified.value = true
+    if (activeTab.value) {
+      activeTab.value.content = content
+      activeTab.value.isModified = true
+    }
   }
 
-  function openFile(path: string, name: string, content: string) {
-    currentFilePath.value = path
-    currentFileName.value = name
-    fileContent.value = content
-    isModified.value = false
+  function setTabModified(tabId: string, modified: boolean) {
+    const tab = tabs.value.find((t) => t.id === tabId)
+    if (tab) {
+      tab.isModified = modified
+    }
+  }
+
+  function openFile(
+    path: string,
+    name: string,
+    content: string,
+    options?: { restoreScroll?: number; restoreProgress?: number }
+  ) {
+    const existing = tabs.value.find((t) => t.path === path)
+    if (existing) {
+      activeTabId.value = existing.id
+      lastFilePath.value = path
+      // 若外部有更新且本地未做修改，静默更新内容
+      if (!existing.isModified && content !== existing.content) {
+        existing.content = content
+      }
+      if (options?.restoreScroll !== undefined) {
+        existing.scrollTop = options.restoreScroll
+        pendingScrollRestore.value = options.restoreScroll
+      } else if (options?.restoreProgress !== undefined) {
+        existing.readingProgress = options.restoreProgress
+        pendingProgressRestore.value = options.restoreProgress
+      } else if (existing.scrollTop > 0) {
+        pendingScrollRestore.value = existing.scrollTop
+      }
+      pushRecent({ name, path, is_dir: false })
+      return
+    }
+
+    const initialScroll = options?.restoreScroll ?? 0
+    const initialProgress = options?.restoreProgress ?? (readingProgress.value[path] || 0)
+
+    const newTab: TabItem = {
+      id: path,
+      path,
+      name,
+      content,
+      isModified: false,
+      scrollTop: initialScroll,
+      readingProgress: initialProgress,
+    }
+
+    tabs.value.push(newTab)
+    activeTabId.value = path
     lastFilePath.value = path
     pushRecent({ name, path, is_dir: false })
+
+    if (options?.restoreScroll !== undefined) {
+      pendingScrollRestore.value = options.restoreScroll
+    } else if (options?.restoreProgress !== undefined) {
+      pendingProgressRestore.value = options.restoreProgress
+    }
+  }
+
+  function switchTab(tabId: string) {
+    if (tabId === activeTabId.value) return
+    const target = tabs.value.find((t) => t.id === tabId)
+    if (!target) return
+
+    activeTabId.value = tabId
+    lastFilePath.value = target.path
+
+    if (target.scrollTop > 0) {
+      pendingScrollRestore.value = target.scrollTop
+    } else if ((target.readingProgress || readingProgress.value[target.path] || 0) > 0.005) {
+      pendingProgressRestore.value = target.readingProgress || readingProgress.value[target.path]
+    } else {
+      pendingScrollRestore.value = 0
+    }
+  }
+
+  function closeTab(tabId: string) {
+    const index = tabs.value.findIndex((t) => t.id === tabId)
+    if (index === -1) return
+
+    const isClosingActive = activeTabId.value === tabId
+    tabs.value.splice(index, 1)
+
+    if (tabs.value.length === 0) {
+      activeTabId.value = ''
+      pendingScrollRestore.value = null
+      pendingProgressRestore.value = null
+      clearSession({ lastFilePath: true, lastScrollTop: true })
+      return
+    }
+
+    if (isClosingActive) {
+      const nextIndex = Math.min(index, tabs.value.length - 1)
+      const nextTab = tabs.value[nextIndex]
+      switchTab(nextTab.id)
+    }
+  }
+
+  function closeOtherTabs(tabId: string) {
+    const target = tabs.value.find((t) => t.id === tabId)
+    if (!target) return
+    tabs.value = [target]
+    switchTab(target.id)
+  }
+
+  function closeTabsToRight(tabId: string) {
+    const index = tabs.value.findIndex((t) => t.id === tabId)
+    if (index === -1) return
+    const isTargetOrLeftActive = tabs.value.findIndex((t) => t.id === activeTabId.value) <= index
+    tabs.value = tabs.value.slice(0, index + 1)
+    if (!isTargetOrLeftActive) {
+      switchTab(tabId)
+    }
+  }
+
+  function closeAllTabs() {
+    tabs.value = []
+    activeTabId.value = ''
+    pendingScrollRestore.value = null
+    pendingProgressRestore.value = null
+    clearSession({ lastFilePath: true, lastScrollTop: true })
+  }
+
+  function reorderTabs(fromIndex: number, toIndex: number) {
+    if (
+      fromIndex === toIndex ||
+      fromIndex < 0 ||
+      toIndex < 0 ||
+      fromIndex >= tabs.value.length ||
+      toIndex >= tabs.value.length
+    ) {
+      return
+    }
+    const [moved] = tabs.value.splice(fromIndex, 1)
+    tabs.value.splice(toIndex, 0, moved)
+  }
+
+  function nextTab() {
+    if (tabs.value.length <= 1) return
+    const idx = tabs.value.findIndex((t) => t.id === activeTabId.value)
+    const nextIdx = (idx + 1) % tabs.value.length
+    switchTab(tabs.value[nextIdx].id)
+  }
+
+  function prevTab() {
+    if (tabs.value.length <= 1) return
+    const idx = tabs.value.findIndex((t) => t.id === activeTabId.value)
+    const prevIdx = (idx - 1 + tabs.value.length) % tabs.value.length
+    switchTab(tabs.value[prevIdx].id)
+  }
+
+  function updateActiveTabScroll(scrollTop: number, progress: number) {
+    if (!activeTab.value) return
+    activeTab.value.scrollTop = scrollTop
+    activeTab.value.readingProgress = progress
+    lastScrollTop.value = scrollTop
+    setReadingProgress(activeTab.value.path, progress)
   }
 
   // 打开文件夹:设置目录树、确保侧边栏展开、记录上次目录、进书架
@@ -172,12 +359,8 @@ export const useAppStore = defineStore('app', () => {
   // 关闭当前目录并回到初始状态(欢迎页):清空文件树、当前文件,并清掉 session 记录,
   // 否则下次启动又会自动恢复这个目录
   function closeFolder() {
-    currentFilePath.value = ''
-    currentFileName.value = ''
-    fileContent.value = ''
-    isModified.value = false
+    closeAllTabs()
     fileTree.value = []
-    pendingScrollRestore.value = null
     clearSession({ lastFolderPath: true, lastFilePath: true, lastScrollTop: true })
   }
 
@@ -212,6 +395,9 @@ export const useAppStore = defineStore('app', () => {
   }
 
   return {
+    tabs,
+    activeTabId,
+    activeTab,
     currentFilePath,
     currentFileName,
     fileContent,
@@ -244,7 +430,17 @@ export const useAppStore = defineStore('app', () => {
     settings,
     hasFile,
     setContent,
+    setTabModified,
     openFile,
+    switchTab,
+    closeTab,
+    closeOtherTabs,
+    closeTabsToRight,
+    closeAllTabs,
+    reorderTabs,
+    nextTab,
+    prevTab,
+    updateActiveTabScroll,
     openFolder,
     updateSettings,
     cycleViewMode,

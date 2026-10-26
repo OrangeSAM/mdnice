@@ -36,8 +36,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useAppStore } from '../stores/app'
-import { invoke } from '@tauri-apps/api/core'
-import { guardUnsavedChanges } from '../composables/useUnsavedGuard'
+import { openMarkdownFile } from '../utils/openFile'
 
 interface FileEntry {
   name: string
@@ -63,16 +62,7 @@ async function handleClick() {
   }
 
   if (!props.item.name.match(/\.(md|markdown|mdown|mkd)$/i)) return
-  if (props.item.path === store.currentFilePath) return
-
-  if (!(await guardUnsavedChanges('guard.action.openFile'))) return
-
-  try {
-    const content = await invoke<string>('read_file', { path: props.item.path })
-    store.openFile(props.item.path, props.item.name, content)
-  } catch (e) {
-    console.error('Failed to open file:', e)
-  }
+  await openMarkdownFile(props.item.path, props.item.name)
 }
 </script>
 

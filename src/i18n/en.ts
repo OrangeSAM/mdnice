@@ -58,6 +58,15 @@ export const en: Record<string, string> = {
   'qo.close': 'close',
   'qo.title': 'Quick open (⌘P)',
 
+  // Tabs
+  'tab.close': 'Close tab (⌘W)',
+  'tab.closeOthers': 'Close other tabs',
+  'tab.closeRight': 'Close tabs to the right',
+  'tab.closeAll': 'Close all tabs',
+  'tab.newFile': 'Open file',
+  'tab.copyPath': 'Copy file path',
+  'tab.copied': 'Path copied',
+
   // Unsaved guard
   'guard.title': 'Mdnice',
   'guard.message': 'The document has unsaved changes. {action} will discard them.',
@@ -67,6 +76,7 @@ export const en: Record<string, string> = {
   'guard.action.openFolder': 'Opening a new folder',
   'guard.action.home': 'Going home',
   'guard.action.closeFolder': 'Closing the folder',
+  'guard.action.closeTab': 'Closing "{name}"',
   'close.message': 'The document has unsaved changes.',
   'close.saveAndExit': 'Save & exit',
 
