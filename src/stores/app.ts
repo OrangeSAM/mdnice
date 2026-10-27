@@ -97,6 +97,8 @@ export const useAppStore = defineStore('app', () => {
 
   // UI state
   const showSidebar = ref(true)
+  const sidebarFilterMdOnly = ref(true)
+  const treeCollapseSignal = ref(0)
   const showSettings = ref(false)
   const showQuickOpen = ref(false)
   const immersive = ref(false)
@@ -374,6 +376,14 @@ export const useAppStore = defineStore('app', () => {
     settings.value.show_sidebar = showSidebar.value
   }
 
+  function toggleSidebarFilter() {
+    sidebarFilterMdOnly.value = !sidebarFilterMdOnly.value
+  }
+
+  function collapseAllFolders() {
+    treeCollapseSignal.value++
+  }
+
   function toggleToc() {
     showToc.value = !showToc.value
   }
@@ -445,6 +455,10 @@ export const useAppStore = defineStore('app', () => {
     updateSettings,
     cycleViewMode,
     toggleSidebar,
+    sidebarFilterMdOnly,
+    toggleSidebarFilter,
+    treeCollapseSignal,
+    collapseAllFolders,
     immersive,
     toggleImmersive,
   }

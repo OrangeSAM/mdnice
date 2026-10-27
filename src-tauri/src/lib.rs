@@ -29,6 +29,8 @@ pub fn run() {
             commands::file::open_folder_dialog,
             commands::file::read_folder,
             commands::file::search_folder,
+            commands::file::reveal_in_folder,
+            commands::file::open_in_default_app,
             commands::file::print_window,
             commands::file::take_pending_open_files,
             commands::settings::load_settings,

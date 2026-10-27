@@ -244,3 +244,79 @@ pub fn search_folder(path: String, query: String, max_results: Option<usize>) ->
     search_dir(&dir_path, &query, &mut results, 0, max_results.unwrap_or(60));
     Ok(results)
 }
+
+/// 在系统文件管理器 (Finder / Explorer / 文件管理器) 中定位并高亮文件或文件夹
+#[tauri::command]
+pub fn reveal_in_folder(path: String) -> Result<(), String> {
+    let p = PathBuf::from(&path);
+    if !p.exists() {
+        return Err("Path does not exist".to_string());
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        std::process::Command::new("open")
+            .arg("-R")
+            .arg(&path)
+            .spawn()
+            .map_err(|e| format!("Failed to reveal file: {}", e))?;
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        std::process::Command::new("explorer")
+            .arg(format!("/select,{}", path))
+            .spawn()
+            .map_err(|e| format!("Failed to reveal file: {}", e))?;
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        let target = if p.is_dir() {
+            p
+        } else {
+            p.parent().map(|parent| parent.to_path_buf()).unwrap_or(p)
+        };
+        std::process::Command::new("xdg-open")
+            .arg(target)
+            .spawn()
+            .map_err(|e| format!("Failed to reveal file: {}", e))?;
+    }
+
+    Ok(())
+}
+
+/// 用系统默认程序打开文件 (如图片、PDF 等)
+#[tauri::command]
+pub fn open_in_default_app(path: String) -> Result<(), String> {
+    let p = PathBuf::from(&path);
+    if !p.exists() {
+        return Err("Path does not exist".to_string());
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        std::process::Command::new("open")
+            .arg(&path)
+            .spawn()
+            .map_err(|e| format!("Failed to open file: {}", e))?;
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        std::process::Command::new("cmd")
+            .args(["/C", "start", "", &path])
+            .spawn()
+            .map_err(|e| format!("Failed to open file: {}", e))?;
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        std::process::Command::new("xdg-open")
+            .arg(&path)
+            .spawn()
+            .map_err(|e| format!("Failed to open file: {}", e))?;
+    }
+
+    Ok(())
+}
